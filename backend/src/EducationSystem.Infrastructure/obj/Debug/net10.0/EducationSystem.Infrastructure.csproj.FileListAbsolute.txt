@@ -15,3 +15,4 @@
 /Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Infrastructure/obj/Debug/net10.0/refint/EducationSystem.Infrastructure.dll
 /Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Infrastructure/obj/Debug/net10.0/EducationSystem.Infrastructure.pdb
 /Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Infrastructure/obj/Debug/net10.0/ref/EducationSystem.Infrastructure.dll
+/Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Infrastructure/obj/Debug/net10.0/EducationSystem.Infrastructure.sourcelink.json

@@ -83,3 +83,4 @@
 /Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.API/obj/Debug/net10.0/EducationSystem.API.pdb
 /Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.API/obj/Debug/net10.0/EducationSystem.API.genruntimeconfig.cache
 /Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.API/obj/Debug/net10.0/ref/EducationSystem.API.dll
+/Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.API/obj/Debug/net10.0/EducationSystem.API.sourcelink.json

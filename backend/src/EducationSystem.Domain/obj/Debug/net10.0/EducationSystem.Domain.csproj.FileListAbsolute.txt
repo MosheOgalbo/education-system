@@ -9,3 +9,4 @@
 /Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Domain/obj/Debug/net10.0/refint/EducationSystem.Domain.dll
 /Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Domain/obj/Debug/net10.0/EducationSystem.Domain.pdb
 /Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Domain/obj/Debug/net10.0/ref/EducationSystem.Domain.dll
+/Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Domain/obj/Debug/net10.0/EducationSystem.Domain.sourcelink.json

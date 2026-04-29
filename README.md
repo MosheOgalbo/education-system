@@ -59,6 +59,33 @@ docker run \
   -d mcr.microsoft.com/mssql/server:2022-latest
 ```
 
+## הרצה מלאה עם Docker Compose
+
+הפרויקט כולל `docker-compose.yml` להרצת:
+- `sqlserver` (SQL Server 2022)
+- `db-init` (הרצת מיגרציות אוטומטית פעם ראשונה)
+- `api` (ASP.NET Core API)
+
+```bash
+docker compose up --build -d
+```
+
+כתובות:
+- API: `http://localhost:5000`
+- Swagger: `http://localhost:5000/swagger/index.html`
+
+עצירה:
+
+```bash
+docker compose down
+```
+
+איפוס מלא כולל נתוני DB (volume):
+
+```bash
+docker compose down -v
+```
+
 ## התקנת סכמת בסיס הנתונים
 
 הרץ את הסקריפטים לפי הסדר:
