@@ -43,9 +43,12 @@ services:
         condition: service_completed_successfully
     environment:
       ASPNETCORE_ENVIRONMENT: Development
+      DISABLE_HTTPS_REDIRECT: "1"
       ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=EducationSystem;User Id=sa;Password=Education@123!;TrustServerCertificate=True;"
+    # Default host port 5001 — macOS often reserves 5000 (AirPlay Receiver).
+    # Override: API_PUBLISH_PORT=8080 docker compose up -d
     ports:
-      - "5000:8080"
+      - "${API_PUBLISH_PORT:-5001}:8080"
 
 volumes:
   sqlserver_data:

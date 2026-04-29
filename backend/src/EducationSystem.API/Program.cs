@@ -5,6 +5,7 @@ using EducationSystem.Infrastructure.Repositories;
 using Microsoft.Data.SqlClient;
 using Serilog;
 using System.Data;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,7 +23,13 @@ builder.Host.UseSerilog();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
-    c.SwaggerDoc("v1", new() { Title = "Education System API", Version = "v1" }));
+{
+    c.SwaggerDoc("v1", new() { Title = "Education System API", Version = "v1" });
+    var xml = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xml);
+    if (File.Exists(xmlPath))
+        c.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
+});
 
 builder.Services.AddScoped<IDbConnection>(_ =>
     new SqlConnection(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -51,6 +58,11 @@ app.UseSwaggerUI(c =>
 });
 
 app.UseCors("AllowAngular");
-app.UseHttpsRedirection();
+
+// HTTP-only hosts (e.g. Docker) have no HTTPS endpoint; skip redirect to avoid warnings/broken responses.
+if (Environment.GetEnvironmentVariable("DISABLE_HTTPS_REDIRECT") is not "1")
+    app.UseHttpsRedirection();
+
+app.MapGet("/", () => Results.Redirect("/swagger/index.html"));
 app.MapControllers();
 app.Run();

@@ -70,9 +70,16 @@ docker run \
 docker compose up --build -d
 ```
 
-כתובות:
-- API: `http://localhost:5000`
-- Swagger: `http://localhost:5000/swagger/index.html`
+כתובות (Docker — המיפוי החוצה הוא **5001** כברירת מחדל, כדי להימנע מפורט 5000 שתפוס לעיתים ב-macOS):
+- API: `http://localhost:5001`
+- `http://localhost:5001/` מפנה אוטומטית ל-Swagger
+- Swagger: `http://localhost:5001/swagger/index.html`
+
+לפורט אחר על המחשב המארח:
+
+```bash
+API_PUBLISH_PORT=8080 docker compose up --build -d
+```
 
 עצירה:
 
@@ -93,8 +100,10 @@ docker compose down -v
 1. `database/migrations/01_create_tables.sql`
 2. `database/migrations/02_indexes.sql`
 3. `database/migrations/03_stored_procedure.sql`
+4. `database/migrations/04_seed_data.sql` (נתוני דמו אידמפוטנטיים)
 
-ניתן להריץ דרך SSMS / Azure Data Studio / sqlcmd.
+ניתן להריץ דרך SSMS / Azure Data Studio / sqlcmd.  
+ב-Docker Compose, `db-init` מריץ את 01–03 בעת יצירת סכמה חדשה, ואת 04 בכל עלייה (רק אם הטבלאות ריקות).
 
 ## הרצת ה-Backend
 
@@ -105,19 +114,30 @@ dotnet run --project src/EducationSystem.API --launch-profile http
 ```
 
 - API Base URL: `http://localhost:5000`
-- Swagger UI: `http://localhost:5000/swagger/index.html`
+- Swagger UI: `http://localhost:5000/swagger/index.html` — **Summary** בעברית (מה הפעולה ומה חוזר בגוף); **Remarks** באנגלית טכני (HTTP, DTOs, מקור נתונים).
 
-## API Endpoints עיקריים
+## API reference — `EducationPlaces`
 
-- `GET /api/EducationPlaces`  
-  מחזיר רשימת פנימיות עם:
-  - `ActiveStudentCount`
-  - `AverageAge`
+| Endpoint | בעברית: מה עושה / מה מחזיר | Technical (EN) |
+|----------|---------------------------|----------------|
+| `GET /api/EducationPlaces` | שולפת את כל הפנימיות. מחזירה מערך: לכל שורה מזהה, שם, עיר, מספר תלמידים **פעילים**, וגיל ממוצע לתלמידים הפעילים. | `200` → `EducationPlaceStatsDto[]`. Sourced from `sp_GetEducationPlacesWithStats`. No body. |
+| `GET /api/EducationPlaces/{id}` | שולפת פנימייה אחת לפי מזהה. מחזירה אובייקט אחד עם אותם שדות סטטיסטיקה כמו ברשימה. | `200` → `EducationPlaceStatsDto`. `404` if id missing. |
+| `POST /api/EducationPlaces` | יוצרת פנימייה חדשה. מחזירה את הרשומה שנוצרה כולל `id` חדש. | `201` + `Location` + `EducationPlaceDto` (`name`, `city`, `id`). |
+| `PUT /api/EducationPlaces/{id}` | מעדכנת שם ועיר. מחזירה את הרשומה אחרי עדכון (בלי שדות סטטיסטיקה). | `200` → `EducationPlaceDto`. `404` if not found. |
+| `DELETE /api/EducationPlaces/{id}` | מוחקת פנימייה. אין גוף תשובה כשהצליח. | `204` success. `400` if students still linked. `404` if not found. |
 
-- `POST /api/Students/upsert`  
-  יוצר או מעדכן תלמיד לפי `Id`.
+## API reference — `Students`
 
-דוגמת payload:
+| Endpoint | בעברית: מה עושה / מה מחזיר | Technical (EN) |
+|----------|---------------------------|----------------|
+| `GET /api/Students` | שולפת רשימת תלמידים. מחזירה מערך: מזהה, שם, תעודת זהות, גיל, פנימייה, פעיל. | `200` → `StudentDto[]`. Optional query: `educationPlaceId`. No body. |
+| `GET /api/Students/{id}` | שולפת תלמיד אחד. מחזירה אובייקט מלא. | `200` → `StudentDto`. `404` if not found. |
+| `POST /api/Students` | יוצרת תלמיד. מחזירה את התלמיד שנוצר. | `201` → `StudentDto`. Validates age `5–25`, unique `identityNumber`, place exists. `400` / `404`. |
+| `PUT /api/Students/{id}` | מעדכנת תלמיד קיים. מחזירה את התלמיד אחרי עדכון. | `200` → `StudentDto`. Same rules as POST. `404` if student or place missing. |
+| `DELETE /api/Students/{id}` | מוחקת תלמיד. אין גוף כשהצליח. | `204` or `404`. |
+| `POST /api/Students/upsert` | יוצרת או מעדכנת לפי `id` בגוף (`null`/`0` = יצירה). מחזירה תמיד את מצב התלמיד אחרי הפעולה. | `200` → `StudentDto` (always; not `201` on create). `400` / `404`. |
+
+דוגמת payload ל-upsert:
 
 ```json
 {
