@@ -1,0 +1,17 @@
+/Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Infrastructure/bin/Debug/net10.0/EducationSystem.Infrastructure.deps.json
+/Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Infrastructure/bin/Debug/net10.0/EducationSystem.Infrastructure.dll
+/Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Infrastructure/bin/Debug/net10.0/EducationSystem.Infrastructure.pdb
+/Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Infrastructure/bin/Debug/net10.0/EducationSystem.Application.dll
+/Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Infrastructure/bin/Debug/net10.0/EducationSystem.Domain.dll
+/Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Infrastructure/bin/Debug/net10.0/EducationSystem.Application.pdb
+/Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Infrastructure/bin/Debug/net10.0/EducationSystem.Domain.pdb
+/Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Infrastructure/obj/Debug/net10.0/EducationSystem.Infrastructure.csproj.AssemblyReference.cache
+/Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Infrastructure/obj/Debug/net10.0/EducationSystem.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+/Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Infrastructure/obj/Debug/net10.0/EducationSystem.Infrastructure.AssemblyInfoInputs.cache
+/Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Infrastructure/obj/Debug/net10.0/EducationSystem.Infrastructure.AssemblyInfo.cs
+/Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Infrastructure/obj/Debug/net10.0/EducationSystem.Infrastructure.csproj.CoreCompileInputs.cache
+/Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Infrastructure/obj/Debug/net10.0/Educatio.467FCD23.Up2Date
+/Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Infrastructure/obj/Debug/net10.0/EducationSystem.Infrastructure.dll
+/Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Infrastructure/obj/Debug/net10.0/refint/EducationSystem.Infrastructure.dll
+/Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Infrastructure/obj/Debug/net10.0/EducationSystem.Infrastructure.pdb
+/Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Infrastructure/obj/Debug/net10.0/ref/EducationSystem.Infrastructure.dll

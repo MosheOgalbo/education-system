@@ -1,0 +1,15 @@
+/Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Application/bin/Debug/net10.0/EducationSystem.Application.deps.json
+/Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Application/bin/Debug/net10.0/EducationSystem.Application.dll
+/Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Application/bin/Debug/net10.0/EducationSystem.Application.pdb
+/Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Application/bin/Debug/net10.0/EducationSystem.Domain.dll
+/Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Application/bin/Debug/net10.0/EducationSystem.Domain.pdb
+/Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Application/obj/Debug/net10.0/EducationSystem.Application.csproj.AssemblyReference.cache
+/Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Application/obj/Debug/net10.0/EducationSystem.Application.GeneratedMSBuildEditorConfig.editorconfig
+/Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Application/obj/Debug/net10.0/EducationSystem.Application.AssemblyInfoInputs.cache
+/Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Application/obj/Debug/net10.0/EducationSystem.Application.AssemblyInfo.cs
+/Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Application/obj/Debug/net10.0/EducationSystem.Application.csproj.CoreCompileInputs.cache
+/Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Application/obj/Debug/net10.0/Educatio.ECE7462E.Up2Date
+/Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Application/obj/Debug/net10.0/EducationSystem.Application.dll
+/Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Application/obj/Debug/net10.0/refint/EducationSystem.Application.dll
+/Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Application/obj/Debug/net10.0/EducationSystem.Application.pdb
+/Users/moshe_ogalbo/OpenSource/education-system/backend/src/EducationSystem.Application/obj/Debug/net10.0/ref/EducationSystem.Application.dll
