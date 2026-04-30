@@ -1,0 +1,18 @@
+mat-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.brand {
+  margin-inline-start: 0.5rem;
+  font: var(--mat-sys-title-medium);
+}
+
+.flex-spacer {
+  flex: 1 1 auto;
+}
+
+a.active {
+  background: color-mix(in srgb, var(--mat-sys-on-primary) 15%, transparent);
+}

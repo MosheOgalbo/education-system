@@ -1,0 +1,67 @@
+<div class="page-container">
+  <h1 class="page-title">תלמידים</h1>
+
+  <div class="toolbar">
+    <a mat-stroked-button routerLink="/education-places">פנימיות</a>
+    <span class="flex-spacer"></span>
+    <button mat-flat-button color="primary" type="button" (click)="openCreate()">
+      תלמיד חדש
+    </button>
+  </div>
+
+  @if (filterPlaceId(); as pid) {
+    <p class="filter-hint">מסונן לפי פנימייה מזהה {{ pid }} ·
+      <a routerLink="/students">הצג הכל</a>
+    </p>
+  }
+
+  @if (loading()) {
+    <app-loading-skeleton />
+  } @else if (error(); as err) {
+    <app-error-state [message]="err" (retry)="retry()" />
+  } @else if (students().length === 0) {
+    <app-empty-state message="אין תלמידים להצגה" />
+  } @else {
+    <div class="table-wrap mat-elevation-z1">
+      <table mat-table [dataSource]="students()">
+        <ng-container matColumnDef="id">
+          <th mat-header-cell *matHeaderCellDef>מזהה</th>
+          <td mat-cell *matCellDef="let r">{{ r.id }}</td>
+        </ng-container>
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>שם</th>
+          <td mat-cell *matCellDef="let r">{{ r.name }}</td>
+        </ng-container>
+        <ng-container matColumnDef="identityNumber">
+          <th mat-header-cell *matHeaderCellDef>ת.ז.</th>
+          <td mat-cell *matCellDef="let r">{{ r.identityNumber }}</td>
+        </ng-container>
+        <ng-container matColumnDef="age">
+          <th mat-header-cell *matHeaderCellDef>גיל</th>
+          <td mat-cell *matCellDef="let r">{{ r.age }}</td>
+        </ng-container>
+        <ng-container matColumnDef="educationPlaceId">
+          <th mat-header-cell *matHeaderCellDef>פנימייה</th>
+          <td mat-cell *matCellDef="let r">{{ r.educationPlaceId }}</td>
+        </ng-container>
+        <ng-container matColumnDef="isActive">
+          <th mat-header-cell *matHeaderCellDef>פעיל</th>
+          <td mat-cell *matCellDef="let r">{{ r.isActive ? 'כן' : 'לא' }}</td>
+        </ng-container>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let r">
+            <button mat-icon-button type="button" aria-label="ערוך" (click)="openEdit(r)">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button type="button" aria-label="מחק" (click)="deleteRow(r)">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+    </div>
+  }
+</div>

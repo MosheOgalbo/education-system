@@ -1,0 +1,13 @@
+// Global typography tweaks (font family loaded from index.html — Inter)
+
+h1,
+h2,
+h3 {
+  font: var(--mat-sys-title-large);
+  margin: 0 0 0.5rem;
+}
+
+.page-title {
+  font: var(--mat-sys-headline-small);
+  margin: 0 0 1rem;
+}

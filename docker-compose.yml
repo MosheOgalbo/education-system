@@ -50,5 +50,15 @@ services:
     ports:
       - "${API_PUBLISH_PORT:-5001}:8080"
 
+  web:
+    build:
+      context: ./edu-management
+      dockerfile: Dockerfile
+    container_name: education-web
+    depends_on:
+      - api
+    ports:
+      - "${WEB_PUBLISH_PORT:-4200}:80"
+
 volumes:
   sqlserver_data:
