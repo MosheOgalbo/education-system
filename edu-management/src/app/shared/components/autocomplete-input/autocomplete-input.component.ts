@@ -61,7 +61,7 @@ import { debounceTime, distinctUntilChanged, startWith, map } from 'rxjs/operato
           matSuffix
           mat-icon-button
           type="button"
-          aria-label="Clear"
+          aria-label="ניקוי החיפוש"
           (click)="clearSearch()"
         >
           <mat-icon>close</mat-icon>
@@ -87,8 +87,8 @@ export class AutocompleteInputComponent implements ControlValueAccessor, OnInit 
   private readonly destroyRef = inject(DestroyRef);
 
   readonly options = input<string[]>([]);
-  readonly label = input('Search');
-  readonly placeholder = input('Type to filter...');
+  readonly label = input('חיפוש');
+  readonly placeholder = input('הקלידו לסינון...');
   readonly value = input('');
 
   readonly valueChange = output<string>();

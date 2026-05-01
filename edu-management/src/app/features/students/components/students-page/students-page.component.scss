@@ -1,35 +1,52 @@
 .page-container {
-  max-width: 1280px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 24px 16px;
+  padding: 28px 20px 40px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 
 .page-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
+  gap: 20px;
   flex-wrap: wrap;
+  padding: 22px 24px;
+  background: var(--gov-card);
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0, 61, 122, 0.08);
+  border: 1px solid rgba(0, 61, 122, 0.12);
+  border-top: 4px solid var(--gov-header);
 
   &__title {
-    font-size: 1.75rem;
+    font-size: 1.65rem;
     font-weight: 700;
     margin: 0;
-    color: #1a1a2e;
+    color: var(--gov-header);
   }
 
   &__subtitle {
-    margin: 4px 0 0;
-    color: #666;
-    font-size: 0.875rem;
+    margin: 8px 0 0;
+    color: var(--gov-muted);
+    font-size: 0.95rem;
   }
 }
 
 .back-nav {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: 10px;
+}
+
+.gov-surface {
+  background: var(--gov-card);
+}
+
+.filter-chips {
+  padding: 14px 18px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 61, 122, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 61, 122, 0.06);
 }

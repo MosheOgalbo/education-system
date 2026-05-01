@@ -2,12 +2,17 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, from, switchMap, tap } from 'rxjs';
 import { EducationPlacesService } from '../services/education-places.service';
-import { EducationPlaceStatsDto } from '../../../core/models/education-place.model';
+import {
+  CreateEducationPlaceDto,
+  EducationPlaceStatsDto,
+} from '../../../core/models/education-place.model';
 import { AsyncState, ApiError, initialAsyncState } from '../../../core/models/api-error.model';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Injectable({ providedIn: 'root' })
 export class EducationPlacesStore {
   private readonly service = inject(EducationPlacesService);
+  private readonly toast = inject(ToastService);
 
   // ── Private writable signals ─────────────────────────────────────────
   private readonly _state = signal<AsyncState<EducationPlaceStatsDto[]>>(
@@ -15,9 +20,11 @@ export class EducationPlacesStore {
   );
   private readonly _searchQuery = signal('');
   private readonly _selectedCityFilter = signal<string | null>(null);
+  private readonly _saving = signal(false);
 
   // ── Public readonly signals ───────────────────────────────────────────
   readonly state = this._state.asReadonly();
+  readonly saving = this._saving.asReadonly();
   readonly searchQuery = this._searchQuery.asReadonly();
   readonly selectedCityFilter = this._selectedCityFilter.asReadonly();
 
@@ -104,5 +111,30 @@ export class EducationPlacesStore {
   clearFilters(): void {
     this._searchQuery.set('');
     this._selectedCityFilter.set(null);
+  }
+
+  async createPlace(dto: CreateEducationPlaceDto): Promise<void> {
+    this._saving.set(true);
+    try {
+      const created = await this.service.createAsync(dto);
+      const newRow: EducationPlaceStatsDto = {
+        id: created.id,
+        name: created.name,
+        city: created.city,
+        activeStudentCount: 0,
+        averageAge: 0,
+      };
+      this._state.update((s) => ({
+        ...s,
+        data: [...s.data, newRow].sort((a, b) =>
+          a.name.localeCompare(b.name, 'he', { numeric: true }),
+        ),
+      }));
+      this.toast.success(`הפנימייה "${created.name}" נוספה בהצלחה.`);
+    } catch {
+      /* interceptor + toast */
+    } finally {
+      this._saving.set(false);
+    }
   }
 }

@@ -26,42 +26,44 @@ export interface StudentDialogData {
     MatSlideToggleModule,
   ],
   template: `
-    <h2 mat-dialog-title>{{ data.mode === 'create' ? 'Add Student' : 'Edit Student' }}</h2>
+    <h2 mat-dialog-title>
+      {{ data.mode === 'create' ? 'הוספת תלמיד' : 'עריכת תלמיד' }}
+    </h2>
 
     <mat-dialog-content>
       <div class="form-grid" [formGroup]="form">
         <mat-form-field appearance="outline">
-          <mat-label>Full Name</mat-label>
-          <input matInput formControlName="name" placeholder="Enter full name" />
+          <mat-label>שם מלא</mat-label>
+          <input matInput formControlName="name" placeholder="הזינו שם מלא" />
           @if (form.get('name')?.hasError('required') && form.get('name')?.touched) {
-            <mat-error>Name is required</mat-error>
+            <mat-error>שדה חובה</mat-error>
           }
         </mat-form-field>
 
         <mat-form-field appearance="outline">
-          <mat-label>Identity Number</mat-label>
-          <input matInput formControlName="identityNumber" placeholder="9-digit number" />
+          <mat-label>מספר זהות</mat-label>
+          <input matInput formControlName="identityNumber" placeholder="9 ספרות" />
           @if (form.get('identityNumber')?.hasError('pattern')) {
-            <mat-error>Must be exactly 9 digits</mat-error>
+            <mat-error>חייב להכיל בדיוק 9 ספרות</mat-error>
           }
         </mat-form-field>
 
         <mat-form-field appearance="outline">
-          <mat-label>Age</mat-label>
+          <mat-label>גיל</mat-label>
           <input matInput type="number" formControlName="age" min="5" max="25" />
           @if (form.get('age')?.hasError('min') || form.get('age')?.hasError('max')) {
-            <mat-error>Age must be between 5 and 25</mat-error>
+            <mat-error>הגיל חייב להיות בין 5 ל־25</mat-error>
           }
         </mat-form-field>
 
         <mat-slide-toggle formControlName="isActive" color="primary">
-          Active Student
+          תלמיד פעיל
         </mat-slide-toggle>
       </div>
     </mat-dialog-content>
 
     <mat-dialog-actions align="end">
-      <button mat-button type="button" mat-dialog-close>Cancel</button>
+      <button mat-button type="button" mat-dialog-close>ביטול</button>
       <button
         mat-raised-button
         color="primary"
@@ -69,7 +71,7 @@ export interface StudentDialogData {
         [disabled]="form.invalid"
         (click)="submit()"
       >
-        {{ data.mode === 'create' ? 'Add Student' : 'Save Changes' }}
+        {{ data.mode === 'create' ? 'הוספה' : 'שמירה' }}
       </button>
     </mat-dialog-actions>
   `,

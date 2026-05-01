@@ -42,18 +42,18 @@ import { NgStyle } from '@angular/common';
       }
 
       .skeleton-header {
-        background: #fafafa;
+        background: var(--gov-table-header-bg);
       }
 
       .skeleton-cell {
         height: 16px;
         border-radius: 4px;
-        background: #e0e0e0;
+        background: rgba(0, 61, 122, 0.12);
         flex: 1;
       }
 
       .skeleton-cell--header {
-        background: #c8c8c8;
+        background: rgba(0, 61, 122, 0.2);
       }
 
       @keyframes pulse {

@@ -73,7 +73,7 @@ export class StudentsStore {
     try {
       const student = await this.service.createAsync(dto);
       this._state.update((s) => ({ ...s, data: [...s.data, student] }));
-      this.toast.success(`Student "${student.name}" added successfully.`);
+      this.toast.success(`התלמיד "${student.name}" נוסף בהצלחה.`);
     } catch {
       /* interceptor + toast */
     } finally {
@@ -89,7 +89,7 @@ export class StudentsStore {
         ...s,
         data: s.data.map((item) => (item.id === id ? updated : item)),
       }));
-      this.toast.success(`Student "${updated.name}" updated.`);
+      this.toast.success(`פרטי "${updated.name}" עודכנו.`);
     } catch {
       /* interceptor + toast */
     } finally {
@@ -104,7 +104,7 @@ export class StudentsStore {
         ...s,
         data: s.data.filter((item) => item.id !== id),
       }));
-      this.toast.success(`"${name}" removed.`);
+      this.toast.success(`"${name}" הוסר מהמערכת.`);
     } catch {
       /* interceptor + toast */
     }

@@ -19,7 +19,7 @@ export class ToastService {
   }
 
   error(message: string): void {
-    this.snackBar.open(message, 'Dismiss', {
+    this.snackBar.open(message, 'סגור', {
       ...this.BASE_CONFIG,
       duration: 8000,
       panelClass: ['toast--error'],

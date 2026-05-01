@@ -1,3 +1,4 @@
+@use './styles/gov-tokens';
 @use './styles/theme';
 @use './styles/typography';
 @use './styles/utilities';
@@ -12,8 +13,9 @@ html,
 body {
   height: 100%;
   margin: 0;
-  font-family: 'Inter', 'Roboto', sans-serif;
-  background: #f5f7fa;
+  font-family: 'Heebo', 'Inter', system-ui, sans-serif;
+  background: var(--gov-page-bg);
+  color: var(--gov-text);
   -webkit-font-smoothing: antialiased;
 }
 

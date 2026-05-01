@@ -64,7 +64,7 @@ import { ColumnDef, TableAction, SortState } from './generic-table.types';
 
         @if (actions().length > 0) {
           <ng-container matColumnDef="__actions">
-            <th mat-header-cell *matHeaderCellDef class="align-right">Actions</th>
+            <th mat-header-cell *matHeaderCellDef class="align-right">פעולות</th>
             <td mat-cell *matCellDef="let row" class="align-right actions-cell">
               @for (action of actions(); track action.label) {
                 <button
@@ -91,16 +91,18 @@ import { ColumnDef, TableAction, SortState } from './generic-table.types';
       </table>
 
       <div class="table-footer">
-        <span class="row-count">{{ data().length }} records</span>
+        <span class="row-count">{{ data().length }} רשומות</span>
       </div>
     </div>
   `,
   styles: [
     `
       .table-wrapper {
-        border-radius: 8px;
+        border-radius: 10px;
         overflow: hidden;
-        background: white;
+        background: var(--gov-card);
+        border: 1px solid rgba(0, 61, 122, 0.12);
+        box-shadow: 0 1px 4px rgba(0, 61, 122, 0.07);
       }
 
       .generic-table {
@@ -111,8 +113,12 @@ import { ColumnDef, TableAction, SortState } from './generic-table.types';
         cursor: pointer;
         transition: background-color 0.15s ease;
       }
+      .mat-mdc-header-row {
+        background: var(--gov-table-header-bg) !important;
+      }
+
       .mat-mdc-row.data-row:hover {
-        background-color: #f0f4ff;
+        background-color: var(--gov-table-row-hover);
       }
 
       .align-left {
@@ -130,13 +136,14 @@ import { ColumnDef, TableAction, SortState } from './generic-table.types';
       }
 
       .table-footer {
-        padding: 8px 16px;
-        background: #fafafa;
-        border-top: 1px solid #eee;
+        padding: 10px 18px;
+        background: #f5f9fd;
+        border-top: 1px solid rgba(0, 61, 122, 0.12);
       }
       .table-footer .row-count {
-        font-size: 0.8rem;
-        color: #888;
+        font-size: 0.85rem;
+        color: var(--gov-muted);
+        font-weight: 500;
       }
 
       @media (max-width: 600px) {
@@ -172,7 +179,7 @@ export class GenericTableComponent<T extends object> {
     return [...this.data()].sort((a, b) => {
       const aVal = this.getNestedValue(a, column);
       const bVal = this.getNestedValue(b, column);
-      const cmp = String(aVal).localeCompare(String(bVal), undefined, {
+      const cmp = String(aVal).localeCompare(String(bVal), 'he', {
         numeric: true,
       });
       return direction === 'asc' ? cmp : -cmp;

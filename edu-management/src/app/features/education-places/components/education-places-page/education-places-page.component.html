@@ -1,27 +1,32 @@
 <div class="page-container">
-  <!-- Header -->
   <header class="page-header">
     <div class="page-header__titles">
-      <h1 class="page-header__title">Education Institutions</h1>
+      <h1 class="page-header__title">פנימיות חינוך</h1>
       <p class="page-header__subtitle">
         @if (!store.isLoading() && !store.isError()) {
-          {{ store.filteredItems().length }} of {{ store.allItems().length }} institutions
+          {{ store.filteredItems().length }} מתוך {{ store.allItems().length }} פנימיות
           &nbsp;·&nbsp;
-          {{ store.totalStudents() | number }} total active students
+          {{ store.totalStudents() | number }} תלמידים פעילים בסך הכול
         }
       </p>
     </div>
 
-    <button mat-raised-button color="primary" [disabled]="store.isLoading()">
-      <mat-icon>add</mat-icon> Add Institution
+    <button
+      mat-raised-button
+      color="primary"
+      type="button"
+      [disabled]="store.isLoading() || store.saving()"
+      (click)="openCreateDialog()"
+    >
+      <mat-icon>add</mat-icon>
+      הוספת פנימייה
     </button>
   </header>
 
-  <!-- Filter Bar -->
-  <div class="filter-bar">
+  <div class="filter-bar gov-surface">
     <app-autocomplete-input
       class="filter-bar__search"
-      label="Search institutions or cities"
+      label="חיפוש לפי שם פנימייה או עיר"
       [options]="store.availableCities()"
       [value]="store.searchQuery()"
       (valueChange)="onSearchChange($event)"
@@ -31,22 +36,24 @@
     @if (hasActiveFilters()) {
       <button
         mat-stroked-button
+        color="primary"
         class="filter-bar__clear"
         (click)="onClearFilters()"
-        matTooltip="Clear all filters"
+        matTooltip="ניקוי כל המסננים"
       >
-        <mat-icon>filter_alt_off</mat-icon> Clear
+        <mat-icon>filter_alt_off</mat-icon>
+        ניקוי מסננים
       </button>
     }
   </div>
 
-  <!-- City Chip Filters -->
   @if (!store.isLoading() && store.availableCities().length > 0) {
     <mat-chip-listbox
-      class="city-chips"
+      class="city-chips gov-surface"
       [value]="store.selectedCityFilter()"
       (change)="onCitySelect($event.value)"
       hideSingleSelectionIndicator
+      aria-label="סינון לפי עיר"
     >
       @for (city of store.availableCities(); track city) {
         <mat-chip-option [value]="city">{{ city }}</mat-chip-option>
@@ -54,39 +61,30 @@
     </mat-chip-listbox>
   }
 
-  <!-- Loading State -->
   @if (store.isLoading()) {
     <app-loading-skeleton [rows]="6" />
-  }
-
-  <!-- Error State -->
-  @else if (store.isError()) {
+  } @else if (store.isError()) {
     <app-error-state
-      [message]="store.error()?.message ?? 'Failed to load institutions'"
+      [message]="store.error()?.message ?? 'טעינת הפנימיות נכשלה'"
       (retry)="store.retry()"
     />
-  }
-
-  <!-- Empty State (loaded but no results) -->
-  @else if (store.filteredItems().length === 0 && store.allItems().length > 0) {
+  } @else if (store.filteredItems().length === 0 && store.allItems().length > 0) {
     <app-empty-state
       icon="search_off"
-      title="No results found"
-      description="Try adjusting your search or clearing the filters."
-      actionLabel="Clear Filters"
+      title="לא נמצאו תוצאות"
+      description="נסו לשנות את החיפוש או לנקות את המסננים."
+      actionLabel="ניקוי מסננים"
       (action)="onClearFilters()"
     />
   } @else if (store.filteredItems().length === 0) {
     <app-empty-state
-      icon="business"
-      title="No institutions yet"
-      description="Add your first education institution to get started."
-      actionLabel="Add Institution"
+      icon="domain"
+      title="אין פנימיות במערכת"
+      description="הוסיפו פנימייה ראשונה כדי להתחיל."
+      actionLabel="הוספת פנימייה"
+      (action)="openCreateDialog()"
     />
-  }
-
-  <!-- Data Table -->
-  @else {
+  } @else {
     <app-generic-table
       [columns]="columns"
       [data]="store.filteredItems()"

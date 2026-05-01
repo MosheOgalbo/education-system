@@ -30,26 +30,26 @@ import { MatButtonModule } from '@angular/material/button';
         text-align: center;
         background: white;
         border-radius: 8px;
-        border: 2px dashed #ddd;
+        border: 2px dashed rgba(0, 61, 122, 0.22);
       }
 
       .empty-state__icon {
         font-size: 56px;
         width: 56px;
         height: 56px;
-        color: #bbb;
+        color: rgba(0, 61, 122, 0.35);
         margin-bottom: 16px;
       }
 
       .empty-state__title {
         font-size: 1.25rem;
         font-weight: 600;
-        color: #333;
+        color: var(--gov-text);
         margin: 0 0 8px;
       }
 
       .empty-state__description {
-        color: #777;
+        color: var(--gov-muted);
         margin: 0 0 24px;
         max-width: 400px;
       }

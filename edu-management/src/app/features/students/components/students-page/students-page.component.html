@@ -1,14 +1,20 @@
 <div class="page-container">
   <header class="page-header">
     <div class="back-nav">
-      <button mat-icon-button type="button" (click)="goBack()" matTooltip="Back to institutions">
-        <mat-icon>arrow_back</mat-icon>
+      <button
+        mat-icon-button
+        type="button"
+        (click)="goBack()"
+        matTooltip="חזרה לרשימת הפנימיות"
+        aria-label="חזרה לרשימת הפנימיות"
+      >
+        <mat-icon>arrow_forward</mat-icon>
       </button>
       <div>
-        <h1 class="page-header__title">Students</h1>
+        <h1 class="page-header__title">תלמידים</h1>
         @if (!store.isLoading()) {
           <p class="page-header__subtitle">
-            {{ store.activeCount() }} active · {{ store.inactiveCount() }} inactive
+            {{ store.activeCount() }} פעילים · {{ store.inactiveCount() }} לא פעילים
           </p>
         }
       </div>
@@ -21,14 +27,17 @@
       [disabled]="store.isLoading() || store.saving()"
       (click)="openCreateDialog()"
     >
-      <mat-icon>person_add</mat-icon> Add Student
+      <mat-icon>person_add</mat-icon>
+      הוספת תלמיד
     </button>
   </header>
 
   <mat-chip-listbox
+    class="filter-chips gov-surface"
     (change)="store.setActiveFilter($event.value)"
     [value]="null"
     hideSingleSelectionIndicator
+    aria-label="סינון לפי סטטוס"
   >
     @for (opt of filterOptions; track opt.label) {
       <mat-chip-option [value]="opt.value">{{ opt.label }}</mat-chip-option>
@@ -39,14 +48,14 @@
     <app-loading-skeleton [rows]="5" />
   } @else if (store.isError()) {
     <app-error-state
-      [message]="store.error()?.message ?? 'Failed to load students'"
+      [message]="store.error()?.message ?? 'טעינת התלמידים נכשלה'"
       (retry)="store.retry()"
     />
   } @else if (store.filteredStudents().length === 0) {
     <app-empty-state
       icon="person_off"
-      title="No students found"
-      description="No students match the current filter."
+      title="לא נמצאו תלמידים"
+      description="אין תלמידים התואמים למסנן הנוכחי."
     />
   } @else {
     <app-generic-table

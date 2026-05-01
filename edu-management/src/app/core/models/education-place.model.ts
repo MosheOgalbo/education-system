@@ -6,6 +6,13 @@ export interface EducationPlaceStatsDto {
   averageAge: number;
 }
 
+/** תשובת POST — ללא שדות סטטיסטיקה */
+export interface EducationPlaceDto {
+  id: number;
+  name: string;
+  city: string;
+}
+
 export interface CreateEducationPlaceDto {
   name: string;
   city: string;

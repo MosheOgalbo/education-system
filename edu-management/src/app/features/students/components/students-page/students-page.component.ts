@@ -43,14 +43,14 @@ export class StudentsPageComponent implements OnInit {
   protected readonly educationPlaceId = signal<number>(0);
 
   protected readonly columns: ColumnDef<StudentDto>[] = [
-    { key: 'name', label: 'Name', sortable: true },
-    { key: 'identityNumber', label: 'ID Number', sortable: true },
-    { key: 'age', label: 'Age', sortable: true, align: 'center' },
+    { key: 'name', label: 'שם מלא', sortable: true },
+    { key: 'identityNumber', label: 'מספר זהות', sortable: true },
+    { key: 'age', label: 'גיל', sortable: true, align: 'center' },
     {
       key: 'isActive',
-      label: 'Status',
+      label: 'סטטוס',
       align: 'center',
-      render: (row) => (row.isActive ? '✅ Active' : '⛔ Inactive'),
+      render: (row) => (row.isActive ? 'פעיל' : 'לא פעיל'),
       cellClass: (row) => (row.isActive ? 'status--active' : 'status--inactive'),
     },
   ];
@@ -58,22 +58,22 @@ export class StudentsPageComponent implements OnInit {
   protected readonly actions: TableAction<StudentDto>[] = [
     {
       icon: 'edit',
-      label: 'Edit',
+      label: 'עריכה',
       color: 'primary',
       handler: (row) => this.openEditDialog(row),
     },
     {
       icon: 'delete',
-      label: 'Delete',
+      label: 'מחיקה',
       color: 'warn',
       handler: (row) => this.deleteStudent(row),
     },
   ];
 
   protected readonly filterOptions = [
-    { label: 'All', value: null as boolean | null },
-    { label: 'Active', value: true },
-    { label: 'Inactive', value: false },
+    { label: 'הכול', value: null as boolean | null },
+    { label: 'פעילים', value: true },
+    { label: 'לא פעילים', value: false },
   ];
 
   ngOnInit(): void {
@@ -115,7 +115,7 @@ export class StudentsPageComponent implements OnInit {
   }
 
   private deleteStudent(student: StudentDto): void {
-    if (confirm(`Remove "${student.name}"?`)) {
+    if (confirm(`להסיר את "${student.name}" מהמערכת?`)) {
       void this.store.deleteStudent(student.id, student.name);
     }
   }

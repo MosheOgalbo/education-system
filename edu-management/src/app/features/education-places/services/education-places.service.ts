@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, firstValueFrom } from 'rxjs';
 import {
   EducationPlaceStatsDto,
+  EducationPlaceDto,
   CreateEducationPlaceDto,
   UpdateEducationPlaceDto,
 } from '../../../core/models/education-place.model';
@@ -24,8 +25,12 @@ export class EducationPlacesService {
     return this.http.get<EducationPlaceStatsDto>(`EducationPlaces/${id}`);
   }
 
-  create(dto: CreateEducationPlaceDto): Observable<EducationPlaceStatsDto> {
-    return this.http.post<EducationPlaceStatsDto>('EducationPlaces', dto);
+  create(dto: CreateEducationPlaceDto): Observable<EducationPlaceDto> {
+    return this.http.post<EducationPlaceDto>('EducationPlaces', dto);
+  }
+
+  createAsync(dto: CreateEducationPlaceDto): Promise<EducationPlaceDto> {
+    return firstValueFrom(this.create(dto));
   }
 
   update(id: number, dto: UpdateEducationPlaceDto): Observable<EducationPlaceStatsDto> {

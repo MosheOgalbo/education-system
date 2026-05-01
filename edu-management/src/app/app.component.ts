@@ -16,13 +16,26 @@ import { MatIconModule } from '@angular/material/icon';
     MatIconModule,
   ],
   template: `
-    <mat-toolbar class="app-toolbar" color="primary">
-      <mat-icon class="toolbar-logo">school</mat-icon>
-      <span class="toolbar-title">EduManagement</span>
+    <mat-toolbar class="app-toolbar gov-topbar" color="primary">
+      <div class="gov-topbar__brand">
+        <mat-icon class="gov-topbar__logo" aria-hidden="true">account_balance</mat-icon>
+        <div class="gov-topbar__titles">
+          <span class="gov-topbar__title">מערכת ניהול פנימיות ותלמידים</span>
+          <span class="gov-topbar__subtitle">חינוך התיישבותי</span>
+        </div>
+      </div>
       <span class="toolbar-spacer"></span>
-      <a mat-button routerLink="/education-places" routerLinkActive="active-link">
-        <mat-icon>business</mat-icon> Institutions
-      </a>
+      <nav class="gov-topbar__nav" aria-label="ניווט ראשי">
+        <a
+          mat-button
+          routerLink="/education-places"
+          routerLinkActive="gov-topbar__link--active"
+          [routerLinkActiveOptions]="{ exact: false }"
+        >
+          <mat-icon aria-hidden="true">domain</mat-icon>
+          פנימיות
+        </a>
+      </nav>
     </mat-toolbar>
 
     <main class="app-main">

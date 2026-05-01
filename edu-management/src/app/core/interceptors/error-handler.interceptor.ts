@@ -39,11 +39,11 @@ function isApiError(body: unknown): body is ApiError {
 
 function getDefaultMessage(status: number): string {
   const messages: Record<number, string> = {
-    0: 'Server unreachable. Check your network connection.',
-    404: 'The requested resource was not found.',
-    409: 'A conflict occurred. The resource may already exist.',
-    422: 'Invalid data submitted.',
-    500: 'An internal server error occurred.',
+    0: 'לא ניתן להתחבר לשרת. בדקו את החיבור לרשת.',
+    404: 'המשאב המבוקש לא נמצא.',
+    409: 'התרחשה התנגשות — ייתכן שהמשאב כבר קיים.',
+    422: 'הנתונים שנשלחו אינם תקינים.',
+    500: 'אירעה שגיאה פנימית בשרת.',
   };
-  return messages[status] ?? `Unexpected error (${status})`;
+  return messages[status] ?? `שגיאה לא צפויה (${status})`;
 }

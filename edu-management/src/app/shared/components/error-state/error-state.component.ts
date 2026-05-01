@@ -10,10 +10,11 @@ import { MatButtonModule } from '@angular/material/button';
   template: `
     <div class="error-state">
       <mat-icon class="error-state__icon">error_outline</mat-icon>
-      <h3 class="error-state__title">Something went wrong</h3>
+      <h3 class="error-state__title">אירעה שגיאה</h3>
       <p class="error-state__message">{{ message() }}</p>
-      <button mat-raised-button color="warn" type="button" (click)="retry.emit()">
-        <mat-icon>refresh</mat-icon> Retry
+      <button mat-raised-button color="primary" type="button" (click)="retry.emit()">
+        <mat-icon>refresh</mat-icon>
+        ניסיון חוזר
       </button>
     </div>
   `,
@@ -27,7 +28,8 @@ import { MatButtonModule } from '@angular/material/button';
         text-align: center;
         background: white;
         border-radius: 8px;
-        border: 2px solid #ffcdd2;
+        border: 2px solid rgba(0, 61, 122, 0.2);
+        border-top: 4px solid #c62828;
       }
 
       .error-state__icon {
@@ -54,6 +56,6 @@ import { MatButtonModule } from '@angular/material/button';
   ],
 })
 export class ErrorStateComponent {
-  readonly message = input('An unexpected error occurred.');
+  readonly message = input('אירעה שגיאה בלתי צפויה.');
   readonly retry = output<void>();
 }

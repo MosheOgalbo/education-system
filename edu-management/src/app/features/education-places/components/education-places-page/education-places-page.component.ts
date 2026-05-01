@@ -1,12 +1,15 @@
 import { Component, OnInit, inject, computed } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { Router } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { EducationPlacesStore } from '../../store/education-places.store';
+import { CreateEducationPlaceDto } from '../../../../core/models/education-place.model';
+import { EducationPlaceFormDialogComponent } from '../education-place-form-dialog/education-place-form-dialog.component';
 import { EducationPlaceStatsDto } from '../../../../core/models/education-place.model';
 import { GenericTableComponent } from '../../../../shared/components/generic-table/generic-table.component';
 import { AutocompleteInputComponent } from '../../../../shared/components/autocomplete-input/autocomplete-input.component';
@@ -39,20 +42,21 @@ import {
 export class EducationPlacesPageComponent implements OnInit {
   protected readonly store = inject(EducationPlacesStore);
   private readonly router = inject(Router);
+  private readonly dialog = inject(MatDialog);
 
   protected readonly columns: ColumnDef<EducationPlaceStatsDto>[] = [
-    { key: 'name', label: 'Institution Name', sortable: true },
-    { key: 'city', label: 'City', sortable: true },
+    { key: 'name', label: 'שם פנימייה', sortable: true },
+    { key: 'city', label: 'עיר', sortable: true },
     {
       key: 'activeStudentCount',
-      label: 'Active Students',
+      label: 'תלמידים פעילים',
       sortable: true,
       align: 'center',
       render: (row) => `${row.activeStudentCount}`,
     },
     {
       key: 'averageAge',
-      label: 'Avg. Age',
+      label: 'גיל ממוצע',
       sortable: true,
       align: 'center',
       render: (row) => (row.averageAge > 0 ? row.averageAge.toFixed(1) : '—'),
@@ -62,7 +66,7 @@ export class EducationPlacesPageComponent implements OnInit {
   protected readonly actions: TableAction<EducationPlaceStatsDto>[] = [
     {
       icon: 'group',
-      label: 'View Students',
+      label: 'צפייה בתלמידים',
       color: 'primary',
       handler: (row) =>
         this.router.navigate(['/education-places', row.id, 'students']),
@@ -87,5 +91,15 @@ export class EducationPlacesPageComponent implements OnInit {
 
   protected onClearFilters(): void {
     this.store.clearFilters();
+  }
+
+  protected openCreateDialog(): void {
+    const ref = this.dialog.open<EducationPlaceFormDialogComponent, void, CreateEducationPlaceDto | undefined>(
+      EducationPlaceFormDialogComponent,
+      { width: '440px', autoFocus: 'first-tabbable' },
+    );
+    ref.afterClosed().subscribe((result) => {
+      if (result) void this.store.createPlace(result);
+    });
   }
 }

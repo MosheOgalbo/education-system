@@ -1,13 +1,14 @@
 :root {
   color-scheme: light;
-  --bg: #f4f6f8;
+  --gov-header: #003d7a;
+  --bg: #eef4fb;
   --card: #fff;
-  --text: #1a1a2e;
-  --muted: #5c6470;
-  --border: #e2e6ea;
+  --text: #0d1b2a;
+  --muted: #4a5f78;
+  --border: rgba(0, 61, 122, 0.15);
   --error-bg: #fdecea;
   --error-border: #f5c2c0;
-  --accent: #1565c0;
+  --accent: #003d7a;
 }
 
 * {
@@ -16,26 +17,40 @@
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-family: 'Heebo', system-ui, sans-serif;
   background: var(--bg);
   color: var(--text);
+}
+
+.gov-topbar {
+  background: linear-gradient(180deg, #004f9f 0%, var(--gov-header) 55%, #003060 100%);
+  color: #fff;
+  border-bottom: 3px solid #002a54;
+  box-shadow: 0 2px 8px rgba(0, 35, 80, 0.25);
+}
+
+.gov-topbar__inner {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 18px 20px;
+}
+
+.gov-topbar__title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.gov-topbar__subtitle {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  opacity: 0.9;
 }
 
 .shell {
   max-width: 960px;
   margin: 0 auto;
   padding: 24px 16px 48px;
-}
-
-.header h1 {
-  margin: 0 0 8px;
-  font-size: 1.5rem;
-}
-
-.subtitle {
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.9rem;
 }
 
 .toolbar {
