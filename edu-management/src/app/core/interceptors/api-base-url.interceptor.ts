@@ -11,9 +11,10 @@ export const apiBaseUrlInterceptor: HttpInterceptorFn = (req, next) => {
     return next(req);
   }
 
-  const apiReq = req.clone({
-    url: `${baseUrl}/${req.url}`,
-  });
+  const base = baseUrl.replace(/\/$/, '');
+  const path = req.url.startsWith('/') ? req.url : `/${req.url}`;
+  const joined = `${base}${path}`.replace(/([^:])\/{2,}/g, '$1/');
+  const apiReq = req.clone({ url: joined });
 
   return next(apiReq);
 };

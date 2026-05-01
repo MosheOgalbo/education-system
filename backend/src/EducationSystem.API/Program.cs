@@ -41,9 +41,23 @@ builder.Services.AddScoped<IStudentService, StudentService>();
 
 builder.Services.AddCors(opt =>
     opt.AddPolicy("AllowAngular", p =>
-        p.WithOrigins("http://localhost:4200")
-         .AllowAnyHeader()
-         .AllowAnyMethod()));
+    {
+        if (builder.Environment.IsDevelopment())
+        {
+            p.SetIsOriginAllowed(static origin =>
+                    !string.IsNullOrEmpty(origin) &&
+                    (origin.StartsWith("http://localhost:", StringComparison.Ordinal) ||
+                     origin.StartsWith("http://127.0.0.1:", StringComparison.Ordinal)))
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        }
+        else
+        {
+            p.WithOrigins("http://localhost:8080", "http://127.0.0.1:8080")
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        }
+    }));
 
 // ── Pipeline ───────────────────────────────────────────────────────────────
 var app = builder.Build();

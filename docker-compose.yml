@@ -1,6 +1,8 @@
 services:
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
+    # Official SQL Server image is amd64-only; on Apple Silicon this runs under emulation.
+    platform: linux/amd64
     container_name: education-sql
     environment:
       ACCEPT_EULA: "Y"
@@ -18,6 +20,7 @@ services:
 
   db-init:
     image: mcr.microsoft.com/mssql-tools:latest
+    platform: linux/amd64
     container_name: education-db-init
     depends_on:
       sqlserver:
@@ -50,6 +53,8 @@ services:
     ports:
       - "${API_PUBLISH_PORT:-5001}:8080"
 
+  # UI in Docker: default host port 8080 so `ng serve --port 4200` on the host is separate.
+  # `docker compose down` stops this container and frees WEB_PUBLISH_PORT only (not host ng serve).
   web:
     build:
       context: ./edu-management
@@ -57,8 +62,10 @@ services:
     container_name: education-web
     depends_on:
       - api
+    restart: "no"
+    stop_grace_period: 10s
     ports:
-      - "${WEB_PUBLISH_PORT:-4200}:80"
+      - "${WEB_PUBLISH_PORT:-8080}:80"
 
 volumes:
   sqlserver_data:

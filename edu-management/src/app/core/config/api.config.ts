@@ -5,9 +5,10 @@ export interface ApiConfig {
   timeout: number;
 }
 
+/** Same-origin `/api` — dev server uses `proxy.conf.json`; Docker nginx proxies `/api` too. */
 export const API_CONFIG = new InjectionToken<ApiConfig>('API_CONFIG', {
   factory: () => ({
-    baseUrl: 'http://localhost:5000/api',
+    baseUrl: '/api',
     timeout: 30_000,
   }),
 });
