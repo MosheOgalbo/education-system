@@ -2,7 +2,7 @@ import { DecimalPipe } from '@angular/common';
 import { Component, input } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 
-import type { EducationPlaceStats } from '../../../../core/models/education-place.model';
+import type { EducationPlaceStatsDto } from '../../../../core/models/education-place.model';
 
 @Component({
   selector: 'app-education-place-stats-card',
@@ -31,5 +31,5 @@ import type { EducationPlaceStats } from '../../../../core/models/education-plac
   `,
 })
 export class EducationPlaceStatsCardComponent {
-  readonly stats = input.required<EducationPlaceStats>();
+  readonly stats = input.required<EducationPlaceStatsDto>();
 }

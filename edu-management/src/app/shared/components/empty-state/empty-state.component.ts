@@ -1,39 +1,66 @@
-import { Component, input } from '@angular/core';
+import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
 
 @Component({
   selector: 'app-empty-state',
   standalone: true,
-  imports: [MatIconModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [MatIconModule, MatButtonModule],
   template: `
-    <div class="empty">
-      <mat-icon>{{ icon() }}</mat-icon>
-      <p>{{ message() }}</p>
+    <div class="empty-state">
+      <mat-icon class="empty-state__icon">{{ icon() }}</mat-icon>
+      <h3 class="empty-state__title">{{ title() }}</h3>
+      <p class="empty-state__description">{{ description() }}</p>
+      @if (actionLabel()) {
+        <button mat-raised-button color="primary" type="button" (click)="action.emit()">
+          {{ actionLabel() }}
+        </button>
+      }
     </div>
   `,
-  styles: `
-    .empty {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 2rem;
-      color: var(--mat-sys-on-surface-variant);
-      text-align: center;
-    }
-    mat-icon {
-      font-size: 40px;
-      width: 40px;
-      height: 40px;
-      opacity: 0.6;
-    }
-    p {
-      margin: 0;
-      font: var(--mat-sys-body-large);
-    }
-  `,
+  styles: [
+    `
+      .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 64px 24px;
+        text-align: center;
+        background: white;
+        border-radius: 8px;
+        border: 2px dashed #ddd;
+      }
+
+      .empty-state__icon {
+        font-size: 56px;
+        width: 56px;
+        height: 56px;
+        color: #bbb;
+        margin-bottom: 16px;
+      }
+
+      .empty-state__title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #333;
+        margin: 0 0 8px;
+      }
+
+      .empty-state__description {
+        color: #777;
+        margin: 0 0 24px;
+        max-width: 400px;
+      }
+    `,
+  ],
 })
 export class EmptyStateComponent {
-  readonly message = input.required<string>();
-  readonly icon = input<string>('inbox');
+  readonly icon = input('inbox');
+  readonly title = input('Nothing here');
+  readonly description = input('');
+  readonly actionLabel = input('');
+
+  readonly action = output<void>();
 }

@@ -1,4 +1,4 @@
-export interface EducationPlaceStats {
+export interface EducationPlaceStatsDto {
   id: number;
   name: string;
   city: string;
@@ -6,15 +6,11 @@ export interface EducationPlaceStats {
   averageAge: number;
 }
 
-export interface EducationPlace {
+export interface CreateEducationPlaceDto {
+  name: string;
+  city: string;
+}
+
+export interface UpdateEducationPlaceDto extends CreateEducationPlaceDto {
   id: number;
-  name: string;
-  city: string;
 }
-
-export interface CreateEducationPlacePayload {
-  name: string;
-  city: string;
-}
-
-export interface UpdateEducationPlacePayload extends CreateEducationPlacePayload {}

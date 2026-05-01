@@ -1,136 +1,125 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { StudentDto, CreateStudentDto } from '../../../../core/models/student.model';
 
-import type { Student } from '../../../../core/models/student.model';
-import { StudentsService } from '../../services/students.service';
-import {
-  AutocompleteInputComponent,
-  type AutocompleteOption,
-} from '../../../../shared/components/autocomplete-input/autocomplete-input.component';
-
-export interface StudentFormDialogData {
-  student?: Student;
-  places: AutocompleteOption[];
+export interface StudentDialogData {
+  mode: 'create' | 'edit';
+  student?: StudentDto;
+  educationPlaceId: number;
 }
 
 @Component({
   selector: 'app-student-form-dialog',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
     MatDialogModule,
-    MatButtonModule,
-    MatCheckboxModule,
     MatFormFieldModule,
     MatInputModule,
-    AutocompleteInputComponent,
+    MatButtonModule,
+    MatSlideToggleModule,
   ],
   template: `
-    <h2 mat-dialog-title>{{ data.student ? 'עריכת תלמיד' : 'תלמיד חדש' }}</h2>
-    <mat-dialog-content [formGroup]="form">
-      <app-autocomplete-input
-        label="פנימייה"
-        [options]="data.places"
-        [selectedId]="placeControl"
-      />
-      <mat-form-field appearance="outline" class="full">
-        <mat-label>שם</mat-label>
-        <input matInput formControlName="name" />
-      </mat-form-field>
-      <mat-form-field appearance="outline" class="full">
-        <mat-label>תעודת זהות</mat-label>
-        <input matInput formControlName="identityNumber" />
-      </mat-form-field>
-      <mat-form-field appearance="outline" class="full">
-        <mat-label>גיל</mat-label>
-        <input matInput type="number" formControlName="age" />
-      </mat-form-field>
-      <mat-checkbox formControlName="isActive">פעיל</mat-checkbox>
+    <h2 mat-dialog-title>{{ data.mode === 'create' ? 'Add Student' : 'Edit Student' }}</h2>
+
+    <mat-dialog-content>
+      <div class="form-grid" [formGroup]="form">
+        <mat-form-field appearance="outline">
+          <mat-label>Full Name</mat-label>
+          <input matInput formControlName="name" placeholder="Enter full name" />
+          @if (form.get('name')?.hasError('required') && form.get('name')?.touched) {
+            <mat-error>Name is required</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Identity Number</mat-label>
+          <input matInput formControlName="identityNumber" placeholder="9-digit number" />
+          @if (form.get('identityNumber')?.hasError('pattern')) {
+            <mat-error>Must be exactly 9 digits</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Age</mat-label>
+          <input matInput type="number" formControlName="age" min="5" max="120" />
+          @if (form.get('age')?.hasError('min') || form.get('age')?.hasError('max')) {
+            <mat-error>Age must be between 5 and 120</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-slide-toggle formControlName="isActive" color="primary">
+          Active Student
+        </mat-slide-toggle>
+      </div>
     </mat-dialog-content>
+
     <mat-dialog-actions align="end">
-      <button mat-button type="button" mat-dialog-close>ביטול</button>
+      <button mat-button type="button" mat-dialog-close>Cancel</button>
       <button
-        mat-flat-button
+        mat-raised-button
         color="primary"
         type="button"
-        [disabled]="form.invalid || saving"
+        [disabled]="form.invalid"
         (click)="submit()"
       >
-        שמור
+        {{ data.mode === 'create' ? 'Add Student' : 'Save Changes' }}
       </button>
     </mat-dialog-actions>
   `,
-  styles: `
-    mat-dialog-content {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      min-width: 320px;
-    }
-    .full {
-      width: 100%;
-    }
-  `,
+  styles: [
+    `
+      .form-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        min-width: 380px;
+        padding-top: 8px;
+      }
+
+      @media (max-width: 480px) {
+        .form-grid {
+          min-width: unset;
+        }
+      }
+    `,
+  ],
 })
-export class StudentFormDialogComponent implements OnInit {
-  private readonly fb = inject(FormBuilder);
-  private readonly api = inject(StudentsService);
-  readonly dialogRef = inject(MatDialogRef<StudentFormDialogComponent, Student | undefined>);
-  readonly data = inject<StudentFormDialogData>(MAT_DIALOG_DATA);
+export class StudentFormDialogComponent {
+  protected readonly data = inject<StudentDialogData>(MAT_DIALOG_DATA);
+  private readonly dialogRef = inject(MatDialogRef<StudentFormDialogComponent>);
 
-  readonly placeControl = this.fb.control<number | null>(null, Validators.required);
-
-  readonly form = this.fb.nonNullable.group({
-    name: ['', Validators.required],
-    identityNumber: ['', Validators.required],
-    age: [0, [Validators.required, Validators.min(1), Validators.max(120)]],
-    isActive: [true],
+  protected readonly form = new FormGroup({
+    name: new FormControl(this.data.student?.name ?? '', [
+      Validators.required,
+      Validators.minLength(2),
+    ]),
+    identityNumber: new FormControl(this.data.student?.identityNumber ?? '', [
+      Validators.required,
+      Validators.pattern(/^\d{9}$/),
+    ]),
+    age: new FormControl(this.data.student?.age ?? null, [
+      Validators.required,
+      Validators.min(5),
+      Validators.max(120),
+    ]),
+    isActive: new FormControl(this.data.student?.isActive ?? true),
   });
 
-  saving = false;
+  protected submit(): void {
+    if (this.form.invalid) return;
 
-  ngOnInit(): void {
-    const s = this.data.student;
-    if (s) {
-      this.form.patchValue({
-        name: s.name,
-        identityNumber: s.identityNumber,
-        age: s.age,
-        isActive: s.isActive,
-      });
-      this.placeControl.setValue(s.educationPlaceId);
-    }
-  }
-
-  submit(): void {
-    if (this.form.invalid || this.placeControl.invalid) {
-      return;
-    }
-    const placeId = this.placeControl.value;
-    if (placeId == null) {
-      return;
-    }
-    const body = {
-      ...this.form.getRawValue(),
-      educationPlaceId: placeId,
+    const result: CreateStudentDto = {
+      ...(this.form.getRawValue() as CreateStudentDto),
+      educationPlaceId: this.data.educationPlaceId,
     };
-    this.saving = true;
-    const s = this.data.student;
-    if (s) {
-      this.api.update(s.id, body).subscribe({
-        next: (row) => this.dialogRef.close(row),
-        error: () => (this.saving = false),
-      });
-    } else {
-      this.api.create(body).subscribe({
-        next: (row) => this.dialogRef.close(row),
-        error: () => (this.saving = false),
-      });
-    }
+
+    this.dialogRef.close(result);
   }
 }

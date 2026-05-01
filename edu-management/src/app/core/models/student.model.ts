@@ -1,4 +1,4 @@
-export interface Student {
+export interface StudentDto {
   id: number;
   name: string;
   identityNumber: string;
@@ -7,7 +7,7 @@ export interface Student {
   isActive: boolean;
 }
 
-export interface CreateStudentPayload {
+export interface CreateStudentDto {
   name: string;
   identityNumber: string;
   age: number;
@@ -15,4 +15,7 @@ export interface CreateStudentPayload {
   isActive: boolean;
 }
 
-export interface UpdateStudentPayload extends CreateStudentPayload {}
+export type UpdateStudentDto = StudentDto;
+
+export type UpsertStudentDto = Partial<StudentDto> &
+  Pick<StudentDto, 'identityNumber' | 'educationPlaceId'>;

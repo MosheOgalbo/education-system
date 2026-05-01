@@ -1,55 +1,91 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, OnInit, inject, computed } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
+import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { EducationPlacesStore } from '../../store/education-places.store';
-import type { EducationPlaceStats } from '../../../../core/models/education-place.model';
+import { EducationPlaceStatsDto } from '../../../../core/models/education-place.model';
 import { GenericTableComponent } from '../../../../shared/components/generic-table/generic-table.component';
-import type { GenericColumn } from '../../../../shared/components/generic-table/generic-table.types';
+import { AutocompleteInputComponent } from '../../../../shared/components/autocomplete-input/autocomplete-input.component';
 import { LoadingSkeletonComponent } from '../../../../shared/components/loading-skeleton/loading-skeleton.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
-import { EducationPlaceStatsCardComponent } from '../education-place-stats-card/education-place-stats-card.component';
+import {
+  ColumnDef,
+  TableAction,
+} from '../../../../shared/components/generic-table/generic-table.types';
 
 @Component({
   selector: 'app-education-places-page',
   standalone: true,
   imports: [
-    RouterLink,
+    DecimalPipe,
     MatButtonModule,
+    MatIconModule,
+    MatChipsModule,
+    MatTooltipModule,
     GenericTableComponent,
+    AutocompleteInputComponent,
     LoadingSkeletonComponent,
     EmptyStateComponent,
     ErrorStateComponent,
-    EducationPlaceStatsCardComponent,
   ],
   templateUrl: './education-places-page.component.html',
   styleUrl: './education-places-page.component.scss',
 })
 export class EducationPlacesPageComponent implements OnInit {
-  private readonly store = inject(EducationPlacesStore);
+  protected readonly store = inject(EducationPlacesStore);
+  private readonly router = inject(Router);
 
-  readonly places = this.store.places;
-  readonly loading = this.store.loading;
-  readonly error = this.store.error;
-
-  readonly columns: GenericColumn<EducationPlaceStats>[] = [
-    { key: 'id', label: 'מזהה' },
-    { key: 'name', label: 'שם' },
-    { key: 'city', label: 'עיר' },
-    { key: 'activeStudentCount', label: 'תלמידים פעילים' },
+  protected readonly columns: ColumnDef<EducationPlaceStatsDto>[] = [
+    { key: 'name', label: 'Institution Name', sortable: true },
+    { key: 'city', label: 'City', sortable: true },
+    {
+      key: 'activeStudentCount',
+      label: 'Active Students',
+      sortable: true,
+      align: 'center',
+      render: (row) => `${row.activeStudentCount}`,
+    },
     {
       key: 'averageAge',
-      label: 'גיל ממוצע',
-      format: (r) => r.averageAge.toFixed(1),
+      label: 'Avg. Age',
+      sortable: true,
+      align: 'center',
+      render: (row) => (row.averageAge > 0 ? row.averageAge.toFixed(1) : '—'),
     },
   ];
+
+  protected readonly actions: TableAction<EducationPlaceStatsDto>[] = [
+    {
+      icon: 'group',
+      label: 'View Students',
+      color: 'primary',
+      handler: (row) =>
+        this.router.navigate(['/education-places', row.id, 'students']),
+    },
+  ];
+
+  protected readonly hasActiveFilters = computed(
+    () => !!this.store.searchQuery() || !!this.store.selectedCityFilter(),
+  );
 
   ngOnInit(): void {
     this.store.load();
   }
 
-  retry(): void {
-    this.store.load();
+  protected onSearchChange(query: string): void {
+    this.store.setSearch(query);
+  }
+
+  protected onCitySelect(city: string | null): void {
+    this.store.setCityFilter(city);
+  }
+
+  protected onClearFilters(): void {
+    this.store.clearFilters();
   }
 }

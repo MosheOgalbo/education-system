@@ -1,18 +1,28 @@
-mat-toolbar {
+.app-toolbar {
   position: sticky;
   top: 0;
-  z-index: 2;
+  z-index: 100;
+  gap: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+
+  .toolbar-logo {
+    margin-right: 4px;
+  }
+  .toolbar-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  .toolbar-spacer {
+    flex: 1;
+  }
+  .active-link {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+  }
 }
 
-.brand {
-  margin-inline-start: 0.5rem;
-  font: var(--mat-sys-title-medium);
-}
-
-.flex-spacer {
-  flex: 1 1 auto;
-}
-
-a.active {
-  background: color-mix(in srgb, var(--mat-sys-on-primary) 15%, transparent);
+.app-main {
+  min-height: calc(100vh - 64px);
+  background: #f5f7fa;
 }

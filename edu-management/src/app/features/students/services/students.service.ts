@@ -1,38 +1,46 @@
-import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-
-import { API_SEGMENT } from '../../../core/config/api.config';
-import type {
-  CreateStudentPayload,
-  Student,
-  UpdateStudentPayload,
+import {
+  StudentDto,
+  CreateStudentDto,
+  UpdateStudentDto,
+  UpsertStudentDto,
 } from '../../../core/models/student.model';
 
 @Injectable({ providedIn: 'root' })
 export class StudentsService {
   private readonly http = inject(HttpClient);
-  private readonly base = `${API_SEGMENT}/Students`;
 
-  getAll(educationPlaceId?: number | null): Observable<Student[]> {
-    const q =
-      educationPlaceId != null ? `?educationPlaceId=${educationPlaceId}` : '';
-    return this.http.get<Student[]>(`${this.base}${q}`);
+  getByEducationPlace(educationPlaceId: number): Observable<StudentDto[]> {
+    const params = new HttpParams().set('educationPlaceId', educationPlaceId);
+    return this.http.get<StudentDto[]>('Students', { params });
   }
 
-  getById(id: number): Observable<Student> {
-    return this.http.get<Student>(`${this.base}/${id}`);
+  getById(id: number): Observable<StudentDto> {
+    return this.http.get<StudentDto>(`Students/${id}`);
   }
 
-  create(body: CreateStudentPayload): Observable<Student> {
-    return this.http.post<Student>(this.base, body);
+  create(dto: CreateStudentDto): Observable<StudentDto> {
+    return this.http.post<StudentDto>('Students', dto);
   }
 
-  update(id: number, body: UpdateStudentPayload): Observable<Student> {
-    return this.http.put<Student>(`${this.base}/${id}`, body);
+  update(id: number, dto: UpdateStudentDto): Observable<StudentDto> {
+    const { name, identityNumber, age, educationPlaceId, isActive } = dto;
+    return this.http.put<StudentDto>(`Students/${id}`, {
+      name,
+      identityNumber,
+      age,
+      educationPlaceId,
+      isActive,
+    });
   }
 
   delete(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.base}/${id}`);
+    return this.http.delete<void>(`Students/${id}`);
+  }
+
+  upsert(dto: UpsertStudentDto): Observable<StudentDto> {
+    return this.http.post<StudentDto>('Students/upsert', dto);
   }
 }

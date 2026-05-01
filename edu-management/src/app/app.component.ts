@@ -15,7 +15,20 @@ import { MatIconModule } from '@angular/material/icon';
     MatButtonModule,
     MatIconModule,
   ],
-  templateUrl: './app.component.html',
+  template: `
+    <mat-toolbar class="app-toolbar" color="primary">
+      <mat-icon class="toolbar-logo">school</mat-icon>
+      <span class="toolbar-title">EduManagement</span>
+      <span class="toolbar-spacer"></span>
+      <a mat-button routerLink="/education-places" routerLinkActive="active-link">
+        <mat-icon>business</mat-icon> Institutions
+      </a>
+    </mat-toolbar>
+
+    <main class="app-main">
+      <router-outlet />
+    </main>
+  `,
   styleUrl: './app.component.scss',
 })
 export class AppComponent {}

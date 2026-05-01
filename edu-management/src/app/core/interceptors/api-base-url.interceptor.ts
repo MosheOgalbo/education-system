@@ -1,12 +1,19 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 
-import { API_BASE_URL } from '../config/api.config';
+import { API_CONFIG } from '../config/api.config';
 
 export const apiBaseUrlInterceptor: HttpInterceptorFn = (req, next) => {
-  const base = inject(API_BASE_URL).replace(/\/$/, '');
-  if (!base || req.url.startsWith('http://') || req.url.startsWith('https://')) {
+  const { baseUrl } = inject(API_CONFIG);
+
+  // Only prefix relative URLs (skip CDN / external calls)
+  if (req.url.startsWith('http')) {
     return next(req);
   }
-  return next(req.clone({ url: `${base}${req.url}` }));
+
+  const apiReq = req.clone({
+    url: `${baseUrl}/${req.url}`,
+  });
+
+  return next(apiReq);
 };

@@ -1,37 +1,34 @@
-import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-
-import { API_SEGMENT } from '../../../core/config/api.config';
-import type {
-  CreateEducationPlacePayload,
-  EducationPlace,
-  EducationPlaceStats,
-  UpdateEducationPlacePayload,
+import {
+  EducationPlaceStatsDto,
+  CreateEducationPlaceDto,
+  UpdateEducationPlaceDto,
 } from '../../../core/models/education-place.model';
 
 @Injectable({ providedIn: 'root' })
 export class EducationPlacesService {
   private readonly http = inject(HttpClient);
-  private readonly base = `${API_SEGMENT}/EducationPlaces`;
 
-  getAll(): Observable<EducationPlaceStats[]> {
-    return this.http.get<EducationPlaceStats[]>(this.base);
+  getAll(): Observable<EducationPlaceStatsDto[]> {
+    return this.http.get<EducationPlaceStatsDto[]>('EducationPlaces');
   }
 
-  getById(id: number): Observable<EducationPlaceStats> {
-    return this.http.get<EducationPlaceStats>(`${this.base}/${id}`);
+  getById(id: number): Observable<EducationPlaceStatsDto> {
+    return this.http.get<EducationPlaceStatsDto>(`EducationPlaces/${id}`);
   }
 
-  create(body: CreateEducationPlacePayload): Observable<EducationPlace> {
-    return this.http.post<EducationPlace>(this.base, body);
+  create(dto: CreateEducationPlaceDto): Observable<EducationPlaceStatsDto> {
+    return this.http.post<EducationPlaceStatsDto>('EducationPlaces', dto);
   }
 
-  update(id: number, body: UpdateEducationPlacePayload): Observable<EducationPlace> {
-    return this.http.put<EducationPlace>(`${this.base}/${id}`, body);
+  update(id: number, dto: UpdateEducationPlaceDto): Observable<EducationPlaceStatsDto> {
+    const { name, city } = dto;
+    return this.http.put<EducationPlaceStatsDto>(`EducationPlaces/${id}`, { name, city });
   }
 
   delete(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.base}/${id}`);
+    return this.http.delete<void>(`EducationPlaces/${id}`);
   }
 }

@@ -1,3 +1,40 @@
 @use './styles/theme';
 @use './styles/typography';
 @use './styles/utilities';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  font-family: 'Inter', 'Roboto', sans-serif;
+  background: #f5f7fa;
+  -webkit-font-smoothing: antialiased;
+}
+
+.toast--success .mdc-snackbar__surface {
+  background: #2e7d32 !important;
+  color: white !important;
+}
+.toast--error .mdc-snackbar__surface {
+  background: #c62828 !important;
+  color: white !important;
+}
+.toast--info .mdc-snackbar__surface {
+  background: #1565c0 !important;
+  color: white !important;
+}
+
+.status--active {
+  color: #2e7d32;
+  font-weight: 600;
+}
+.status--inactive {
+  color: #c62828;
+  font-weight: 600;
+}

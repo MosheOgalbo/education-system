@@ -1,33 +1,98 @@
 <div class="page-container">
-  <h1 class="page-title">פנימיות</h1>
-
-  @if (loading()) {
-    <app-loading-skeleton />
-  } @else if (error(); as err) {
-    <app-error-state [message]="err" (retry)="retry()" />
-  } @else if (places().length === 0) {
-    <app-empty-state message="אין פנימיות להצגה" />
-  } @else {
-    <div class="actions mb-1">
-      <a mat-stroked-button color="primary" routerLink="/students">כל התלמידים</a>
+  <!-- Header -->
+  <header class="page-header">
+    <div class="page-header__titles">
+      <h1 class="page-header__title">Education Institutions</h1>
+      <p class="page-header__subtitle">
+        @if (!store.isLoading() && !store.isError()) {
+          {{ store.filteredItems().length }} of {{ store.allItems().length }} institutions
+          &nbsp;·&nbsp;
+          {{ store.totalStudents() | number }} total active students
+        }
+      </p>
     </div>
 
-    <app-generic-table [columns]="columns" [data]="places()" />
+    <button mat-raised-button color="primary" [disabled]="store.isLoading()">
+      <mat-icon>add</mat-icon> Add Institution
+    </button>
+  </header>
 
-    <h2 class="mt-1">סיכום לפי פנימייה</h2>
-    <div class="cards">
-      @for (p of places(); track p.id) {
-        <div class="card-cell">
-          <app-education-place-stats-card [stats]="p" />
-          <a
-            mat-button
-            color="primary"
-            [routerLink]="['/students']"
-            [queryParams]="{ educationPlaceId: p.id }"
-            >תלמידים בפנימייה</a
-          >
-        </div>
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <app-autocomplete-input
+      class="filter-bar__search"
+      label="Search institutions or cities"
+      [options]="store.availableCities()"
+      [value]="store.searchQuery()"
+      (valueChange)="onSearchChange($event)"
+      (optionSelected)="onCitySelect($event)"
+    />
+
+    @if (hasActiveFilters()) {
+      <button
+        mat-stroked-button
+        class="filter-bar__clear"
+        (click)="onClearFilters()"
+        matTooltip="Clear all filters"
+      >
+        <mat-icon>filter_alt_off</mat-icon> Clear
+      </button>
+    }
+  </div>
+
+  <!-- City Chip Filters -->
+  @if (!store.isLoading() && store.availableCities().length > 0) {
+    <mat-chip-listbox
+      class="city-chips"
+      [value]="store.selectedCityFilter()"
+      (change)="onCitySelect($event.value)"
+      hideSingleSelectionIndicator
+    >
+      @for (city of store.availableCities(); track city) {
+        <mat-chip-option [value]="city">{{ city }}</mat-chip-option>
       }
-    </div>
+    </mat-chip-listbox>
+  }
+
+  <!-- Loading State -->
+  @if (store.isLoading()) {
+    <app-loading-skeleton [rows]="6" />
+  }
+
+  <!-- Error State -->
+  @else if (store.isError()) {
+    <app-error-state
+      [message]="store.error()?.message ?? 'Failed to load institutions'"
+      (retry)="store.retry()"
+    />
+  }
+
+  <!-- Empty State (loaded but no results) -->
+  @else if (store.filteredItems().length === 0 && store.allItems().length > 0) {
+    <app-empty-state
+      icon="search_off"
+      title="No results found"
+      description="Try adjusting your search or clearing the filters."
+      actionLabel="Clear Filters"
+      (action)="onClearFilters()"
+    />
+  } @else if (store.filteredItems().length === 0) {
+    <app-empty-state
+      icon="business"
+      title="No institutions yet"
+      description="Add your first education institution to get started."
+      actionLabel="Add Institution"
+    />
+  }
+
+  <!-- Data Table -->
+  @else {
+    <app-generic-table
+      [columns]="columns"
+      [data]="store.filteredItems()"
+      [actions]="actions"
+      [loading]="store.isLoading()"
+      trackByKey="id"
+    />
   }
 </div>

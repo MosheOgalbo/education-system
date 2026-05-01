@@ -1,14 +1,17 @@
-export interface ApiErrorBody {
+export interface ApiError {
   statusCode: number;
   message: string;
   timestamp: string;
 }
 
-export function isApiErrorBody(value: unknown): value is ApiErrorBody {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'message' in value &&
-    typeof (value as ApiErrorBody).message === 'string'
-  );
+export type LoadingState = 'idle' | 'loading' | 'success' | 'error';
+
+export interface AsyncState<T> {
+  data: T;
+  state: LoadingState;
+  error: ApiError | null;
+}
+
+export function initialAsyncState<T>(data: T): AsyncState<T> {
+  return { data, state: 'idle', error: null };
 }

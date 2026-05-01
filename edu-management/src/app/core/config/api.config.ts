@@ -1,8 +1,13 @@
 import { InjectionToken } from '@angular/core';
 
-/** Optional HTTP API origin (e.g. `https://api.example.com`). Empty = same-origin + dev proxy. */
-export const API_BASE_URL = new InjectionToken<string>('API_BASE_URL', {
-  factory: () => '',
-});
+export interface ApiConfig {
+  baseUrl: string;
+  timeout: number;
+}
 
-export const API_SEGMENT = '/api';
+export const API_CONFIG = new InjectionToken<ApiConfig>('API_CONFIG', {
+  factory: () => ({
+    baseUrl: 'http://localhost:5000/api',
+    timeout: 30_000,
+  }),
+});

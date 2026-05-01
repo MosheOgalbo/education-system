@@ -1,86 +1,158 @@
-import { Component, computed, effect, input, untracked } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import {
+  Component,
+  ChangeDetectionStrategy,
+  forwardRef,
+  input,
+  output,
+  OnInit,
+  inject,
+  DestroyRef,
+  effect,
+} from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import {
+  ControlValueAccessor,
+  FormControl,
+  NG_VALUE_ACCESSOR,
+  ReactiveFormsModule,
+} from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { map, startWith } from 'rxjs';
-
-export interface AutocompleteOption {
-  id: number;
-  label: string;
-}
+import {
+  MatAutocompleteModule,
+  MatAutocompleteSelectedEvent,
+} from '@angular/material/autocomplete';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { debounceTime, distinctUntilChanged, startWith, map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-autocomplete-input',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule,
     MatAutocompleteModule,
+    MatIconModule,
+    MatButtonModule,
+  ],
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => AutocompleteInputComponent),
+      multi: true,
+    },
   ],
   template: `
-    <mat-form-field appearance="outline" class="full">
+    <mat-form-field appearance="outline" class="autocomplete-field">
       <mat-label>{{ label() }}</mat-label>
+      <mat-icon matPrefix>search</mat-icon>
       <input
         matInput
-        type="text"
-        [formControl]="textControl"
+        [formControl]="searchControl"
         [matAutocomplete]="auto"
         [placeholder]="placeholder()"
       />
-      <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onPick($event.option.value)">
-        @for (opt of filtered(); track opt.id) {
-          <mat-option [value]="opt">{{ opt.label }}</mat-option>
+
+      @if (searchControl.value) {
+        <button
+          matSuffix
+          mat-icon-button
+          type="button"
+          aria-label="Clear"
+          (click)="clearSearch()"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+
+      <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onOptionSelected($event)">
+        @for (option of filteredOptions(); track option) {
+          <mat-option [value]="option">{{ option }}</mat-option>
         }
       </mat-autocomplete>
     </mat-form-field>
   `,
-  styles: `
-    .full {
-      width: 100%;
-    }
-  `,
+  styles: [
+    `
+      .autocomplete-field {
+        width: 100%;
+      }
+    `,
+  ],
 })
-export class AutocompleteInputComponent {
-  readonly label = input.required<string>();
-  readonly placeholder = input('');
-  readonly options = input.required<AutocompleteOption[]>();
-  readonly selectedId = input.required<FormControl<number | null>>();
+export class AutocompleteInputComponent implements ControlValueAccessor, OnInit {
+  private readonly destroyRef = inject(DestroyRef);
 
-  readonly textControl = new FormControl('', { nonNullable: true });
+  readonly options = input<string[]>([]);
+  readonly label = input('Search');
+  readonly placeholder = input('Type to filter...');
+  readonly value = input('');
 
-  private readonly query = toSignal(
-    this.textControl.valueChanges.pipe(
+  readonly valueChange = output<string>();
+  readonly optionSelected = output<string | null>();
+
+  protected readonly searchControl = new FormControl<string>('', { nonNullable: true });
+
+  protected readonly filteredOptions = toSignal(
+    this.searchControl.valueChanges.pipe(
       startWith(''),
-      map((s) => s.toLowerCase())
+      debounceTime(150),
+      distinctUntilChanged(),
+      map((v) => this.filterOptions(v ?? '')),
     ),
-    { initialValue: '' }
+    { initialValue: [] as string[] },
   );
 
-  readonly filtered = computed(() => {
-    const q = this.query();
-    return this.options().filter((o) => o.label.toLowerCase().includes(q));
-  });
+  private onChange: (v: string) => void = () => {};
+  private onTouched: () => void = () => {};
 
   constructor() {
     effect(() => {
-      const opts = this.options();
-      const id = this.selectedId().value;
-      if (id == null) {
-        untracked(() => this.textControl.setValue('', { emitEvent: false }));
-        return;
-      }
-      const found = opts.find((o) => o.id === id);
-      untracked(() =>
-        this.textControl.setValue(found?.label ?? '', { emitEvent: false })
-      );
+      const v = this.value();
+      this.searchControl.setValue(v ?? '', { emitEvent: false });
     });
   }
 
-  onPick(opt: AutocompleteOption): void {
-    this.selectedId().setValue(opt.id);
-    this.textControl.setValue(opt.label, { emitEvent: false });
+  ngOnInit(): void {
+    this.searchControl.valueChanges
+      .pipe(debounceTime(150), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
+      .subscribe((v) => {
+        this.onChange(v ?? '');
+        this.valueChange.emit(v ?? '');
+      });
+
+    if (this.value()) {
+      this.searchControl.setValue(this.value(), { emitEvent: false });
+    }
+  }
+
+  protected onOptionSelected(event: MatAutocompleteSelectedEvent): void {
+    this.optionSelected.emit(event.option.value as string);
+  }
+
+  protected clearSearch(): void {
+    this.searchControl.setValue('');
+    this.optionSelected.emit(null);
+  }
+
+  private filterOptions(query: string): string[] {
+    const q = query.toLowerCase();
+    return this.options().filter((o) => o.toLowerCase().includes(q));
+  }
+
+  writeValue(value: string): void {
+    this.searchControl.setValue(value ?? '', { emitEvent: false });
+  }
+  registerOnChange(fn: (v: string) => void): void {
+    this.onChange = fn;
+  }
+  registerOnTouched(fn: () => void): void {
+    this.onTouched = fn;
+  }
+  setDisabledState(disabled: boolean): void {
+    disabled ? this.searchControl.disable() : this.searchControl.enable();
   }
 }

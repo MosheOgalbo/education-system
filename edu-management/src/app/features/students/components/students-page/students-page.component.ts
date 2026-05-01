@@ -1,30 +1,32 @@
-import { Component, OnInit, computed, inject } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import { MatTableModule } from '@angular/material/table';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatDialog } from '@angular/material/dialog';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
-import type { Student } from '../../../../core/models/student.model';
-import { EducationPlacesStore } from '../../../education-places/store/education-places.store';
 import { StudentsStore } from '../../store/students.store';
-import { StudentsService } from '../../services/students.service';
-import {
-  StudentFormDialogComponent,
-  type StudentFormDialogData,
-} from '../student-form-dialog/student-form-dialog.component';
+import { StudentDto } from '../../../../core/models/student.model';
+import { ColumnDef, TableAction } from '../../../../shared/components/generic-table/generic-table.types';
+import { GenericTableComponent } from '../../../../shared/components/generic-table/generic-table.component';
 import { LoadingSkeletonComponent } from '../../../../shared/components/loading-skeleton/loading-skeleton.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import {
+  StudentFormDialogComponent,
+  StudentDialogData,
+} from '../student-form-dialog/student-form-dialog.component';
 
 @Component({
   selector: 'app-students-page',
   standalone: true,
   imports: [
-    RouterLink,
-    MatTableModule,
     MatButtonModule,
     MatIconModule,
+    MatChipsModule,
+    MatTooltipModule,
+    GenericTableComponent,
     LoadingSkeletonComponent,
     EmptyStateComponent,
     ErrorStateComponent,
@@ -33,73 +35,94 @@ import { ErrorStateComponent } from '../../../../shared/components/error-state/e
   styleUrl: './students-page.component.scss',
 })
 export class StudentsPageComponent implements OnInit {
+  protected readonly store = inject(StudentsStore);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
-  private readonly studentsApi = inject(StudentsService);
-  private readonly studentsStore = inject(StudentsStore);
-  private readonly placesStore = inject(EducationPlacesStore);
 
-  readonly students = this.studentsStore.students;
-  readonly loading = this.studentsStore.loading;
-  readonly error = this.studentsStore.error;
-  readonly filterPlaceId = this.studentsStore.filterPlaceId;
+  protected readonly educationPlaceId = signal<number>(0);
 
-  readonly displayedColumns = [
-    'id',
-    'name',
-    'identityNumber',
-    'age',
-    'educationPlaceId',
-    'isActive',
-    'actions',
-  ] as const;
+  protected readonly columns: ColumnDef<StudentDto>[] = [
+    { key: 'name', label: 'Name', sortable: true },
+    { key: 'identityNumber', label: 'ID Number', sortable: true },
+    { key: 'age', label: 'Age', sortable: true, align: 'center' },
+    {
+      key: 'isActive',
+      label: 'Status',
+      align: 'center',
+      render: (row) => (row.isActive ? '✅ Active' : '⛔ Inactive'),
+      cellClass: (row) => (row.isActive ? 'status--active' : 'status--inactive'),
+    },
+  ];
 
-  readonly placeOptions = computed(() =>
-    this.placesStore.places().map((p) => ({ id: p.id, label: `${p.name} — ${p.city}` }))
-  );
+  protected readonly actions: TableAction<StudentDto>[] = [
+    {
+      icon: 'edit',
+      label: 'Edit',
+      color: 'primary',
+      handler: (row) => this.openEditDialog(row),
+    },
+    {
+      icon: 'delete',
+      label: 'Delete',
+      color: 'warn',
+      handler: (row) => this.deleteStudent(row),
+    },
+  ];
+
+  protected readonly filterOptions = [
+    { label: 'All', value: null as boolean | null },
+    { label: 'Active', value: true },
+    { label: 'Inactive', value: false },
+  ];
 
   ngOnInit(): void {
-    this.placesStore.load();
-    this.route.queryParamMap.subscribe((q) => {
-      const raw = q.get('educationPlaceId');
-      this.studentsStore.setFilterPlaceId(raw != null && raw !== '' ? Number(raw) : null);
-      this.studentsStore.load();
+    const id = Number(this.route.snapshot.paramMap.get('id'));
+    this.educationPlaceId.set(id);
+    this.store.load(id);
+  }
+
+  protected openCreateDialog(): void {
+    const ref = this.dialog.open<StudentFormDialogComponent, StudentDialogData>(
+      StudentFormDialogComponent,
+      {
+        data: { mode: 'create', educationPlaceId: this.educationPlaceId() },
+        width: '480px',
+      },
+    );
+
+    ref.afterClosed().subscribe((result) => {
+      if (result) void this.store.createStudent(result);
     });
   }
 
-  retry(): void {
-    this.studentsStore.load();
+  private openEditDialog(student: StudentDto): void {
+    const ref = this.dialog.open<StudentFormDialogComponent, StudentDialogData>(
+      StudentFormDialogComponent,
+      {
+        data: {
+          mode: 'edit',
+          student,
+          educationPlaceId: this.educationPlaceId(),
+        },
+        width: '480px',
+      },
+    );
+
+    ref.afterClosed().subscribe((result) => {
+      if (result) {
+        this.store.updateStudent(student.id, { ...result, id: student.id });
+      }
+    });
   }
 
-  openCreate(): void {
-    this.openDialog({});
-  }
-
-  openEdit(row: Student): void {
-    this.openDialog({ student: row });
-  }
-
-  private openDialog(extra: Partial<StudentFormDialogData>): void {
-    this.dialog
-      .open<StudentFormDialogComponent, StudentFormDialogData, Student | undefined>(
-        StudentFormDialogComponent,
-        {
-          width: '520px',
-          data: { places: this.placeOptions(), ...extra },
-        }
-      )
-      .afterClosed()
-      .subscribe((result) => {
-        if (result) {
-          this.studentsStore.upsertLocal(result);
-        }
-      });
-  }
-
-  deleteRow(row: Student): void {
-    if (!confirm(`למחוק את ${row.name}?`)) {
-      return;
+  private deleteStudent(student: StudentDto): void {
+    if (confirm(`Remove "${student.name}"?`)) {
+      this.store.deleteStudent(student.id, student.name);
     }
-    this.studentsApi.delete(row.id).subscribe(() => this.studentsStore.removeLocal(row.id));
+  }
+
+  protected goBack(): void {
+    void this.router.navigate(['/education-places']);
   }
 }
