@@ -1,6 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Subject, switchMap, tap } from 'rxjs';
+import { Subject, from, switchMap, tap } from 'rxjs';
 import { EducationPlacesService } from '../services/education-places.service';
 import { EducationPlaceStatsDto } from '../../../core/models/education-place.model';
 import { AsyncState, ApiError, initialAsyncState } from '../../../core/models/api-error.model';
@@ -66,7 +66,7 @@ export class EducationPlacesStore {
           this._state.update((s) => ({ ...s, state: 'loading', error: null })),
         ),
         switchMap(() =>
-          this.service.getAll().pipe(
+          from(this.service.getAllAsync()).pipe(
             tap({
               next: (data) =>
                 this._state.set({ data, state: 'success', error: null }),

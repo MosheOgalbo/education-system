@@ -110,15 +110,13 @@ export class StudentsPageComponent implements OnInit {
     );
 
     ref.afterClosed().subscribe((result) => {
-      if (result) {
-        this.store.updateStudent(student.id, { ...result, id: student.id });
-      }
+      if (result) void this.store.updateStudent(student.id, { ...result, id: student.id });
     });
   }
 
   private deleteStudent(student: StudentDto): void {
     if (confirm(`Remove "${student.name}"?`)) {
-      this.store.deleteStudent(student.id, student.name);
+      void this.store.deleteStudent(student.id, student.name);
     }
   }
 

@@ -48,9 +48,9 @@ export interface StudentDialogData {
 
         <mat-form-field appearance="outline">
           <mat-label>Age</mat-label>
-          <input matInput type="number" formControlName="age" min="5" max="120" />
+          <input matInput type="number" formControlName="age" min="5" max="25" />
           @if (form.get('age')?.hasError('min') || form.get('age')?.hasError('max')) {
-            <mat-error>Age must be between 5 and 120</mat-error>
+            <mat-error>Age must be between 5 and 25</mat-error>
           }
         </mat-form-field>
 
@@ -107,7 +107,7 @@ export class StudentFormDialogComponent {
     age: new FormControl(this.data.student?.age ?? null, [
       Validators.required,
       Validators.min(5),
-      Validators.max(120),
+      Validators.max(25),
     ]),
     isActive: new FormControl(this.data.student?.isActive ?? true),
   });

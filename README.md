@@ -16,7 +16,8 @@
 - **Logging:** Serilog (Console + Rolling File)
 - **API Docs:** Swagger / OpenAPI
 - **Database:** SQL Server 2022 (Docker)
-- **Frontend:** Angular (מיועד להתחבר ל-API, CORS מוגדר ל-`http://localhost:4200`)
+- **Frontend (מטלה / מודרני):** `angularjs-client` — **AngularJS 1.8** (טבלה, AutoComplete עיר, async/await, טיפול בשגיאות).
+- **Frontend (מוצר):** `edu-management` — **Angular 21** (אותו API; שירותים עם `firstValueFrom` ל־async/await).
 
 ## ארכיטקטורה
 
@@ -166,12 +167,79 @@ dotnet run --project src/EducationSystem.API --launch-profile http
   - Console
   - `backend/src/EducationSystem.API/logs/education-*.log`
 
-## Frontend
+## לקוח AngularJS 1.x (מטלת Hands-On)
 
-תיקיית `frontend` שמורה ללקוח Angular.  
-בשלב זה צד השרת מוכן לחיבור מהלקוח דרך CORS לפורט `4200`.
+תיקייה: `angularjs-client/`.
+
+- מציג טבלת פנימיות עם **מזהה, שם, עיר, תלמידים פעילים, גיל ממוצע** מ־`GET /api/EducationPlaces`.
+- **סינון לפי עיר בצד הלקוח**: שדה עם `datalist` (השלמה אוטומטית) + debounce 150ms; אין קריאת HTTP נוספת בעת הסינון.
+- **async/await** בטעינת הנתונים מול `$http`.
+- **UX בשגיאה**: הודעה ידידותית, פירוט כשיש גוף JSON מהשרת, כפתור «נסה שוב».
+
+הרצה (אחרי שה־API זמין, למשל `docker compose up -d`):
+
+```bash
+cd angularjs-client
+npm install
+npm start
+```
+
+נפתח דפדפן על **http://localhost:4300** (CORS מותר גם בסביבת Production ב־API לפורט זה).
+
+כתובת API ניתנת לעקיפה לפני טעינת Angular:
+
+```html
+<script>
+  window.EDUCATION_API_BASE = 'http://127.0.0.1:5001/api';
+</script>
+```
+
+## לקוח Angular (מודרני)
+
+תיקייה: `edu-management/`.
+
+```bash
+cd edu-management
+npm install
+ng serve
+```
+
+פרוקסי ל־API: ראו `edu-management/proxy.conf.cjs` ו־`angular.json`.
+
+## Design Patterns (סיכום למטלה)
+
+| דפוס / עקרון | היכן |
+|--------------|------|
+| **שכבות (Layered / Clean-ish)** | API → Application (Services, DTOs, Exceptions) → Infrastructure (Repositories) → SQL |
+| **Repository** | ממשקים ב־Application, מימוש Dapper ב־Infrastructure — בידוד גישה לנתונים |
+| **Dependency Injection** | רישום שירותים ב־`Program.cs`, הזרקה לקונטרולרים ולשירותים |
+| **DTO** | הפרדה בין מודל API לישויות דומיין / תוצאות SP |
+| **Middleware / Cross-cutting** | `GlobalExceptionMiddleware` — טיפול אחיד בשגיאות, לוג, נקודת הרחבה להתראות קריטיות |
+| **Signal / computed (Angular)** | חנות פנימיות עם סינון לקוח ללא round-trip |
+
+## שימוש ב-AI ותהליכי עבודה בצוות
+
+**במטלה הנוכחית:** נעזרתי בכלי AI לייצור מבנה פרויקט, סקריפטי SQL, שכבות Backend, לקוח Angular, ותיעוד — תוך **אימות ידני** מול Swagger, `docker compose`, ובדיקות דפדפן.
+
+**כמוביל צוות (המלצות לשגרה):**
+
+1. **Spec קצר לפני קוד** — משימה ב־PR אחד: API contract, שדות DTO, קודי שגיאה.
+2. **Copilot / סוכן AI** — טיוטת CRUD, טסטים יחידה, טקסטי Swagger; מפתח אנושי מאשר security ו־business rules.
+3. **QA** — רשימת smoke אוטומטית (Playwright) + בדיקת רגרסיה ידנית לזרימות קריטיות; AI מסייע בכתיבת תרחישים, לא מחליף החלטת שחרור.
+4. **Code review** — דגש על ולידציה בשרת, SQL injection (פרמטרים), ושאיננו סומכים על לקוח לבדיקות בטיחות.
+
+## חניכה — מודול «מורים» (Code Review לג׳וניור)
+
+אם מוסיפים מודול **מורים** (Teachers), הייתי דורש ב־review:
+
+1. **דומיין ו־DB** — טבלה `Teacher` עם FK לפנימייה (אם המורה משויך למוסד), אינדקסים על שדות חיפוש; מיגרציה בספריית `database/migrations` עם מספור עקבי.
+2. **API** — אותה שכבה כמו `Students`: Controller דק, `TeacherService` עם ולידציות (שם, ת״ז/מזהה ייחודי, פנימייה קיימת), `NotFoundException` / `ValidationException` מתאימים.
+3. **אל תכפה לוגיקה על הלקוח** — כל כללי העסק בשרת; הלקוח רק משקף שגיאות.
+4. **DTOs + Swagger** — תיעוד בעברית ב־Summary כמו בשאר ה־endpoints.
+5. **Frontend** — שימוש חוזר ב־`generic-table` / דפוס חנות כמו `students` או `education-places`; routing lazy אם המודול גדול.
+6. **בדיקות** — לפחות בדיקות שירות או אינטגרציה ל־Upsert ול־404 על מזהה לא קיים.
 
 ## הערות
 
 - קובצי `.DS_Store` מנוהלים ב-`.gitignore` ולא נכנסים ל-repo.
-- קיימים `.gitignore` ייעודיים לשורש הפרויקט, ל-`backend` ול-`frontend`.
+- קיימים `.gitignore` ייעודיים לשורש הפרויקט, ל־`backend` ול־`edu-management`.

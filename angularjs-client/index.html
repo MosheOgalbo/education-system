@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl" ng-app="eduApp">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>פנימיות — AngularJS (Hands-On)</title>
+    <link rel="stylesheet" href="styles.css" />
+    <!-- AngularJS 1.8.x — דרישת מטלה -->
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.3/angular.min.js"></script>
+    <!-- אופציונלי: כתובת API (ברירת מחדל Docker מקומי 5001) -->
+    <script>
+      window.EDUCATION_API_BASE =
+        window.EDUCATION_API_BASE || 'http://localhost:5001/api';
+    </script>
+  </head>
+  <body ng-controller="PlacesCtrl as vm">
+    <div class="shell">
+      <header class="header">
+        <h1>מינהל חינוך התיישבותי — פנימיות</h1>
+        <p class="subtitle">לקוח AngularJS 1.x + async/await מול ה-Web API</p>
+      </header>
+
+      <section class="toolbar" ng-hide="vm.loading && !vm.places.length">
+        <label class="field-label" for="citySearch">חיפוש / סינון לפי עיר (בצד הלקוח)</label>
+        <div class="field-row">
+          <input
+            id="citySearch"
+            type="text"
+            class="city-input"
+            placeholder="הקלד שם עיר (השלמה מהרשימה)"
+            ng-model="vm.cityQuery"
+            ng-model-options="{ debounce: 150 }"
+            ng-change="vm.onCityQueryChange()"
+            list="cityList"
+            autocomplete="off"
+          />
+          <datalist id="cityList">
+            <option ng-repeat="c in vm.citySuggestions track by c" value="{{ c }}"></option>
+          </datalist>
+          <button type="button" class="btn btn--ghost" ng-click="vm.clearCityFilter()">
+            נקה סינון
+          </button>
+        </div>
+      </section>
+
+      <div class="banner banner--error" ng-if="vm.error">
+        <strong>{{ vm.error }}</strong>
+        <p ng-if="vm.errorDetail">{{ vm.errorDetail }}</p>
+        <button type="button" class="btn" ng-click="vm.retry()">נסה שוב</button>
+      </div>
+
+      <div class="skeleton" ng-if="vm.loading">
+        <div class="sk-row" ng-repeat="n in [1,2,3,4,5,6] track by $index"></div>
+      </div>
+
+      <div class="table-wrap" ng-if="!vm.loading && !vm.error">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>מזהה</th>
+              <th>שם פנימייה</th>
+              <th>עיר</th>
+              <th>תלמידים פעילים</th>
+              <th>גיל ממוצע</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="p in vm.filteredPlaces track by p.id">
+              <td>{{ p.id }}</td>
+              <td>{{ p.name }}</td>
+              <td>{{ p.city }}</td>
+              <td class="num">{{ p.activeStudentCount }}</td>
+              <td class="num">
+                {{ p.averageAge > 0 ? (p.averageAge | number : 1) : '—' }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="footer-meta" ng-if="vm.places.length">
+          מוצגות {{ vm.filteredPlaces.length }} מתוך {{ vm.places.length }} פנימיות
+        </p>
+        <p class="empty" ng-if="!vm.filteredPlaces.length && vm.places.length">
+          אין תוצאות התואמות לסינון העיר.
+        </p>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

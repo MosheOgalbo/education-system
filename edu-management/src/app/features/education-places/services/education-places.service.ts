@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, firstValueFrom } from 'rxjs';
 import {
   EducationPlaceStatsDto,
   CreateEducationPlaceDto,
@@ -13,6 +13,11 @@ export class EducationPlacesService {
 
   getAll(): Observable<EducationPlaceStatsDto[]> {
     return this.http.get<EducationPlaceStatsDto[]>('EducationPlaces');
+  }
+
+  /** async/await מול ה-API (תואם דרישת Hands-On לצד הלקוח). */
+  getAllAsync(): Promise<EducationPlaceStatsDto[]> {
+    return firstValueFrom(this.getAll());
   }
 
   getById(id: number): Observable<EducationPlaceStatsDto> {

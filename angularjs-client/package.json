@@ -1,0 +1,11 @@
+{
+  "name": "education-system-angularjs-client",
+  "private": true,
+  "description": "לקוח AngularJS 1.x למטלת Hands-On — רשימת פנימיות וסטטיסטיקות",
+  "scripts": {
+    "start": "http-server . -p 4300 -c-1 -o"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}

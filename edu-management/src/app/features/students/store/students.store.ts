@@ -1,6 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Subject, switchMap, tap } from 'rxjs';
+import { Subject, from, switchMap, tap } from 'rxjs';
 import { StudentsService } from '../services/students.service';
 import { StudentDto, CreateStudentDto, UpdateStudentDto } from '../../../core/models/student.model';
 import { AsyncState, ApiError, initialAsyncState } from '../../../core/models/api-error.model';
@@ -42,7 +42,7 @@ export class StudentsStore {
           this._state.update((s) => ({ ...s, state: 'loading', error: null }));
         }),
         switchMap((id) =>
-          this.service.getByEducationPlace(id).pipe(
+          from(this.service.getByEducationPlaceAsync(id)).pipe(
             tap({
               next: (data) => this._state.set({ data, state: 'success', error: null }),
               error: (err: ApiError) =>
@@ -70,40 +70,43 @@ export class StudentsStore {
 
   async createStudent(dto: CreateStudentDto): Promise<void> {
     this.isSaving.set(true);
-    this.service.create(dto).subscribe({
-      next: (student) => {
-        this._state.update((s) => ({ ...s, data: [...s.data, student] }));
-        this.toast.success(`Student "${student.name}" added successfully.`);
-        this.isSaving.set(false);
-      },
-      error: () => this.isSaving.set(false),
-    });
+    try {
+      const student = await this.service.createAsync(dto);
+      this._state.update((s) => ({ ...s, data: [...s.data, student] }));
+      this.toast.success(`Student "${student.name}" added successfully.`);
+    } catch {
+      /* interceptor + toast */
+    } finally {
+      this.isSaving.set(false);
+    }
   }
 
-  updateStudent(id: number, dto: UpdateStudentDto): void {
+  async updateStudent(id: number, dto: UpdateStudentDto): Promise<void> {
     this.isSaving.set(true);
-    this.service.update(id, dto).subscribe({
-      next: (updated) => {
-        this._state.update((s) => ({
-          ...s,
-          data: s.data.map((item) => (item.id === id ? updated : item)),
-        }));
-        this.toast.success(`Student "${updated.name}" updated.`);
-        this.isSaving.set(false);
-      },
-      error: () => this.isSaving.set(false),
-    });
+    try {
+      const updated = await this.service.updateAsync(id, dto);
+      this._state.update((s) => ({
+        ...s,
+        data: s.data.map((item) => (item.id === id ? updated : item)),
+      }));
+      this.toast.success(`Student "${updated.name}" updated.`);
+    } catch {
+      /* interceptor + toast */
+    } finally {
+      this.isSaving.set(false);
+    }
   }
 
-  deleteStudent(id: number, name: string): void {
-    this.service.delete(id).subscribe({
-      next: () => {
-        this._state.update((s) => ({
-          ...s,
-          data: s.data.filter((item) => item.id !== id),
-        }));
-        this.toast.success(`"${name}" removed.`);
-      },
-    });
+  async deleteStudent(id: number, name: string): Promise<void> {
+    try {
+      await this.service.deleteAsync(id);
+      this._state.update((s) => ({
+        ...s,
+        data: s.data.filter((item) => item.id !== id),
+      }));
+      this.toast.success(`"${name}" removed.`);
+    } catch {
+      /* interceptor + toast */
+    }
   }
 }
