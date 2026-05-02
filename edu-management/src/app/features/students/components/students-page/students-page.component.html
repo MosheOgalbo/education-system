@@ -11,7 +11,10 @@
         <mat-icon>arrow_forward</mat-icon>
       </button>
       <div>
-        <h1 class="page-header__title">תלמידים</h1>
+        <h1 class="page-header__title">תלמידים בפנימייה</h1>
+        @if (placeName()) {
+          <p class="page-header__subtitle page-header__subtitle--emphasis">{{ placeName() }}</p>
+        }
         @if (!store.isLoading()) {
           <p class="page-header__subtitle">
             {{ store.activeCount() }} פעילים · {{ store.inactiveCount() }} לא פעילים

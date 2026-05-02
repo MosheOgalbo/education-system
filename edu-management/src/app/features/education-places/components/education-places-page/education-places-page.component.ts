@@ -68,10 +68,13 @@ export class EducationPlacesPageComponent implements OnInit {
       icon: 'group',
       label: 'צפייה בתלמידים',
       color: 'primary',
-      handler: (row) =>
-        this.router.navigate(['/education-places', row.id, 'students']),
+      handler: (row) => this.navigateToStudents(row),
     },
   ];
+
+  protected navigateToStudents(row: EducationPlaceStatsDto): void {
+    void this.router.navigate(['/education-places', row.id, 'students']);
+  }
 
   protected readonly hasActiveFilters = computed(
     () => !!this.store.searchQuery() || !!this.store.selectedCityFilter(),

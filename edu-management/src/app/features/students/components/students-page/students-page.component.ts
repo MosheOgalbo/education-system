@@ -5,7 +5,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { firstValueFrom } from 'rxjs';
 
+import { EducationPlacesService } from '../../../education-places/services/education-places.service';
 import { StudentsStore } from '../../store/students.store';
 import { StudentDto } from '../../../../core/models/student.model';
 import { ColumnDef, TableAction } from '../../../../shared/components/generic-table/generic-table.types';
@@ -39,8 +41,10 @@ export class StudentsPageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
+  private readonly placesService = inject(EducationPlacesService);
 
   protected readonly educationPlaceId = signal<number>(0);
+  protected readonly placeName = signal<string | null>(null);
 
   protected readonly columns: ColumnDef<StudentDto>[] = [
     { key: 'name', label: 'שם מלא', sortable: true },
@@ -78,8 +82,22 @@ export class StudentsPageComponent implements OnInit {
 
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
+    if (!Number.isFinite(id) || id <= 0) {
+      void this.router.navigate(['/education-places']);
+      return;
+    }
     this.educationPlaceId.set(id);
     this.store.load(id);
+    void this.loadPlaceName(id);
+  }
+
+  private async loadPlaceName(educationPlaceId: number): Promise<void> {
+    try {
+      const place = await firstValueFrom(this.placesService.getById(educationPlaceId));
+      this.placeName.set(place.name);
+    } catch {
+      this.placeName.set(null);
+    }
   }
 
   protected openCreateDialog(): void {

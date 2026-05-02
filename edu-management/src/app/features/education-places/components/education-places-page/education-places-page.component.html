@@ -91,6 +91,7 @@
       [actions]="actions"
       [loading]="store.isLoading()"
       trackByKey="id"
+      (rowClick)="navigateToStudents($event)"
     />
   }
 </div>

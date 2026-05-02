@@ -31,6 +31,13 @@
     margin: 8px 0 0;
     color: var(--gov-muted);
     font-size: 0.95rem;
+
+    &--emphasis {
+      margin: 4px 0 0;
+      color: var(--gov-header);
+      font-weight: 600;
+      font-size: 1.05rem;
+    }
   }
 }
 
