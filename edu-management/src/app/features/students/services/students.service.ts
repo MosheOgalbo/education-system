@@ -1,3 +1,4 @@
+/** שכבת HTTP לתלמידים — אותו עיקרון כמו EducationPlacesService: Observable + עטיפות *Async ל-await ב-store */
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, firstValueFrom } from 'rxjs';
@@ -23,6 +24,10 @@ export class StudentsService {
 
   getById(id: number): Observable<StudentDto> {
     return this.http.get<StudentDto>(`Students/${id}`);
+  }
+
+  getByIdAsync(id: number): Promise<StudentDto> {
+    return firstValueFrom(this.getById(id));
   }
 
   create(dto: CreateStudentDto): Observable<StudentDto> {

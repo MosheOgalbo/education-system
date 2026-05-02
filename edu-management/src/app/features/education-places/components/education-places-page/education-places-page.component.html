@@ -15,6 +15,7 @@
       mat-raised-button
       color="primary"
       type="button"
+      class="page-header__cta"
       [disabled]="store.isLoading() || store.saving()"
       (click)="openCreateDialog()"
     >
@@ -64,10 +65,7 @@
   @if (store.isLoading()) {
     <app-loading-skeleton [rows]="6" />
   } @else if (store.isError()) {
-    <app-error-state
-      [message]="store.error()?.message ?? 'טעינת הפנימיות נכשלה'"
-      (retry)="store.retry()"
-    />
+    <app-error-state [apiError]="store.error()" (retry)="store.retry()" />
   } @else if (store.filteredItems().length === 0 && store.allItems().length > 0) {
     <app-empty-state
       icon="search_off"
@@ -84,14 +82,79 @@
       actionLabel="הוספת פנימייה"
       (action)="openCreateDialog()"
     />
+  } @else if (isCompactLayout()) {
+    <div class="places-cards" role="list">
+      @for (place of store.filteredItems(); track place.id) {
+        <mat-card
+          class="place-card"
+          [class.place-card--inactive]="!place.isActive"
+          role="listitem"
+        >
+          <mat-card-header class="place-card__header">
+            <div class="place-card__titles">
+              <mat-card-title class="place-card__title">{{ place.name }}</mat-card-title>
+              <mat-card-subtitle>{{ place.city }}</mat-card-subtitle>
+            </div>
+            <button
+              mat-icon-button
+              color="primary"
+              type="button"
+              class="place-card__menu-btn"
+              [matMenuTriggerFor]="mobileMenu"
+              matTooltip="פעולות"
+              aria-label="פתיחת תפריט פעולות"
+            >
+              <mat-icon>more_horiz</mat-icon>
+            </button>
+            <mat-menu #mobileMenu="matMenu" class="actions-mat-menu">
+              <button mat-menu-item type="button" (click)="navigateToStudents(place)">
+                <mat-icon>school</mat-icon>
+                <span>ניהול פנימייה</span>
+              </button>
+              <button mat-menu-item type="button" (click)="togglePlaceActive(place)">
+                <mat-icon>{{ place.isActive ? 'toggle_off' : 'toggle_on' }}</mat-icon>
+                <span>{{
+                  place.isActive ? 'מעבר לפנימייה לא פעילה' : 'הפיכת פנימייה לפעילה'
+                }}</span>
+              </button>
+              <button mat-menu-item type="button" (click)="confirmDeletePlace(place)">
+                <mat-icon class="warn-icon">delete</mat-icon>
+                <span>מחיקת פנימייה</span>
+              </button>
+            </mat-menu>
+          </mat-card-header>
+          <mat-card-content class="place-card__body">
+            <div class="place-card__stats">
+              <span class="place-card__stat"
+                ><strong>{{ place.activeStudentCount }}</strong> תלמידים פעילים</span
+              >
+              <span class="place-card__stat"
+                >גיל ממוצע:
+                <strong>{{
+                  place.averageAge > 0 ? (place.averageAge | number: '1.1-1') : '—'
+                }}</strong></span
+              >
+            </div>
+            <span
+              class="place-card__badge"
+              [class.place-card__badge--off]="!place.isActive"
+            >
+              {{ place.isActive ? 'פעילה' : 'לא פעילה' }}
+            </span>
+          </mat-card-content>
+        </mat-card>
+      }
+    </div>
   } @else {
     <app-generic-table
       [columns]="columns"
       [data]="store.filteredItems()"
       [actions]="actions"
       [loading]="store.isLoading()"
+      [useActionsMenu]="true"
+      [rowClickable]="false"
+      [rowClassFn]="rowClassFn"
       trackByKey="id"
-      (rowClick)="navigateToStudents($event)"
     />
   }
 </div>

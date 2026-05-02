@@ -62,6 +62,19 @@ public sealed class EducationPlacesController(IEducationPlaceService service) : 
         => Ok(await service.UpdateAsync(id, dto));
 
     /// <summary>
+    /// מעדכן האם הפנימייה פעילה במערכת (שיבוץ תלמידים חדשים מותר רק לפנימייה פעילה).
+    /// </summary>
+    /// <remarks>
+    /// בחרנו PATCH נפרד מ-PUT של שם/עיר: עדכון «דגל» פעילות הוא פעולה חלקית (partial update) סמנטית,
+    /// לא דורש שליחה מחדש של כל שדות המשאב, ומקל על הלקוח ועל הרשאות עתידיות.
+    /// </remarks>
+    [HttpPatch("{id:int}/active")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> SetActive(int id, [FromBody] SetEducationPlaceActiveDto dto)
+        => Ok(await service.SetActiveAsync(id, dto));
+
+    /// <summary>
     /// מוחקת פנימייה מהמסד. במצב הצלחה אין תוכן בגוף התשובה.
     /// </summary>
     /// <remarks>

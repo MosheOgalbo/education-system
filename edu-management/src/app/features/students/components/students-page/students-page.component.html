@@ -50,10 +50,7 @@
   @if (store.isLoading()) {
     <app-loading-skeleton [rows]="5" />
   } @else if (store.isError()) {
-    <app-error-state
-      [message]="store.error()?.message ?? 'טעינת התלמידים נכשלה'"
-      (retry)="store.retry()"
-    />
+    <app-error-state [apiError]="store.error()" (retry)="store.retry()" />
   } @else if (store.filteredStudents().length === 0) {
     <app-empty-state
       icon="person_off"
@@ -66,6 +63,8 @@
       [data]="store.filteredStudents()"
       [actions]="actions"
       [loading]="store.saving()"
+      [useActionsMenu]="true"
+      [rowClickable]="false"
       trackByKey="id"
     />
   }

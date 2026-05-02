@@ -1,17 +1,46 @@
-import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
+/**
+ * מסך שגיאה «עשיר»: כותרת, אייקון והנחיה משתנים לפי סוג הבעיה (רשת / 5xx / 404).
+ * נשען על http-error.mapper כדי שהמילוליות תהיה עקבית עם מה שהמשתמש רואה בטוסטים.
+ */
+import {
+  Component,
+  input,
+  output,
+  computed,
+  ChangeDetectionStrategy,
+} from '@angular/core';
+import { NgClass } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+
+import type { ApiError } from '../../../core/models/api-error.model';
+import {
+  errorPresentationVariant,
+  errorStateHint,
+  errorStateTitle,
+} from '../../../core/utils/http-error.mapper';
 
 @Component({
   selector: 'app-error-state',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatIconModule, MatButtonModule],
+  imports: [NgClass, MatIconModule, MatButtonModule],
   template: `
-    <div class="error-state">
-      <mat-icon class="error-state__icon">error_outline</mat-icon>
-      <h3 class="error-state__title">אירעה שגיאה</h3>
-      <p class="error-state__message">{{ message() }}</p>
+    <div
+      class="error-state"
+      [ngClass]="{
+        'error-state--network': view().variant === 'network',
+        'error-state--server': view().variant === 'server',
+        'error-state--notfound': view().variant === 'notfound',
+      }"
+      role="alert"
+    >
+      <mat-icon class="error-state__icon" aria-hidden="true">{{ view().icon }}</mat-icon>
+      <h3 class="error-state__title">{{ view().title }}</h3>
+      <p class="error-state__message">{{ view().body }}</p>
+      @if (view().hint) {
+        <p class="error-state__hint">{{ view().hint }}</p>
+      }
       <button mat-raised-button color="primary" type="button" (click)="retry.emit()">
         <mat-icon>refresh</mat-icon>
         ניסיון חוזר
@@ -26,10 +55,23 @@ import { MatButtonModule } from '@angular/material/button';
         align-items: center;
         padding: 64px 24px;
         text-align: center;
-        background: white;
-        border-radius: 8px;
-        border: 2px solid rgba(0, 61, 122, 0.2);
+        background: var(--gov-card, #fff);
+        border-radius: 10px;
+        border: 1px solid rgba(0, 61, 122, 0.15);
         border-top: 4px solid #c62828;
+        box-shadow: 0 2px 8px rgba(0, 61, 122, 0.08);
+      }
+
+      .error-state--network {
+        border-top-color: #e65100;
+      }
+
+      .error-state--server {
+        border-top-color: #b71c1c;
+      }
+
+      .error-state--notfound {
+        border-top-color: #1565c0;
       }
 
       .error-state__icon {
@@ -40,22 +82,92 @@ import { MatButtonModule } from '@angular/material/button';
         margin-bottom: 16px;
       }
 
+      .error-state--network .error-state__icon {
+        color: #fb8c00;
+      }
+
+      .error-state--notfound .error-state__icon {
+        color: #1e88e5;
+      }
+
       .error-state__title {
-        font-size: 1.25rem;
-        font-weight: 600;
+        font-size: 1.35rem;
+        font-weight: 700;
         color: #c62828;
-        margin: 0 0 8px;
+        margin: 0 0 10px;
+      }
+
+      .error-state--network .error-state__title {
+        color: #e65100;
+      }
+
+      .error-state--notfound .error-state__title {
+        color: #1565c0;
       }
 
       .error-state__message {
+        color: #444;
+        margin: 0 0 12px;
+        max-width: 440px;
+        line-height: 1.55;
+        font-size: 1rem;
+      }
+
+      .error-state__hint {
         color: #666;
-        margin: 0 0 24px;
-        max-width: 400px;
+        margin: 0 0 22px;
+        max-width: 420px;
+        font-size: 0.9rem;
+        line-height: 1.5;
+      }
+
+      .error-state__hint::before {
+        content: '';
+        display: block;
+        width: 48px;
+        height: 3px;
+        background: rgba(0, 61, 122, 0.15);
+        margin: 0 auto 14px;
+        border-radius: 2px;
       }
     `,
   ],
 })
 export class ErrorStateComponent {
-  readonly message = input('אירעה שגיאה בלתי צפויה.');
+  /** כאשר קיים — מוצגים כותרת, אייקון והנחיה לפי סוג השגיאה. */
+  readonly apiError = input<ApiError | null>(null);
+  /** גיבוי כאשר אין אובייקט שגיאה מהשרת. */
+  readonly message = input<string | undefined>(undefined);
+
   readonly retry = output<void>();
+
+  protected readonly view = computed(() => {
+    const err = this.apiError();
+    if (err) {
+      const variant = errorPresentationVariant(err.statusCode);
+      const icon =
+        variant === 'network'
+          ? 'cloud_off'
+          : variant === 'server'
+            ? 'dns'
+            : variant === 'notfound'
+              ? 'search_off'
+              : 'error_outline';
+      return {
+        variant,
+        icon,
+        title: errorStateTitle(err.statusCode),
+        body: err.message,
+        hint: errorStateHint(err.statusCode),
+      };
+    }
+
+    return {
+      variant: 'generic' as const,
+      icon: 'error_outline',
+      title: 'אירעה שגיאה',
+      body: this.message() ?? 'אירעה שגיאה בלתי צפויה.',
+      hint: null as string | null,
+    };
+  });
 }

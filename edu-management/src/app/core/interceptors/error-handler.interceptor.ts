@@ -1,49 +1,35 @@
+/**
+ * Interceptor מרכזי לשגיאות HTTP.
+ *
+ * למה לא טוסט על כל שגיאה: בקשות GET שמציגות מסך שגיאה מלא (error-state) יוצרות כפילות מעצבנת
+ * אם גם נזרק טוסט. לעומת זאת ב-POST/PUT/PATCH/DELETE המשתמש צריך פידבק מיידי כי אין תמיד מסך ייעודי.
+ *
+ * למה מחזירים throwError אחרי מיפוי: שירותי ה-store עדיין יכולים לתפוס Promise ולעדכן state ל-error,
+ * בזמן שההודעה המנוסחת מגיעה מ-toApiError אחיד.
+ */
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { catchError, throwError } from 'rxjs';
 
-import type { ApiError } from '../models/api-error.model';
 import { ToastService } from '../services/toast.service';
+import { toApiError } from '../utils/http-error.mapper';
 
 export const errorHandlerInterceptor: HttpInterceptorFn = (req, next) => {
   const toast = inject(ToastService);
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
-      const apiError: ApiError = isApiError(error.error)
-        ? error.error
-        : {
-            statusCode: error.status,
-            message: getDefaultMessage(error.status),
-            timestamp: new Date().toISOString(),
-          };
+      const apiError = toApiError(error);
 
-      // Don't toast 401/403 — handle in auth guard
-      if (error.status !== 401 && error.status !== 403) {
+      const skipToastForAuth = error.status === 401 || error.status === 403;
+      /** טעינות (GET) מציגות מסך שגיאה מלא — טוסט כפול מיותר. פעולות שינוי עדיין מקבלות טוסט. */
+      const isReadOnlyRequest = req.method === 'GET' || req.method === 'HEAD';
+
+      if (!skipToastForAuth && !isReadOnlyRequest) {
         toast.error(apiError.message);
       }
 
       return throwError(() => apiError);
-    })
+    }),
   );
 };
-
-function isApiError(body: unknown): body is ApiError {
-  return (
-    typeof body === 'object' &&
-    body !== null &&
-    'statusCode' in body &&
-    'message' in body
-  );
-}
-
-function getDefaultMessage(status: number): string {
-  const messages: Record<number, string> = {
-    0: 'לא ניתן להתחבר לשרת. בדקו את החיבור לרשת.',
-    404: 'המשאב המבוקש לא נמצא.',
-    409: 'התרחשה התנגשות — ייתכן שהמשאב כבר קיים.',
-    422: 'הנתונים שנשלחו אינם תקינים.',
-    500: 'אירעה שגיאה פנימית בשרת.',
-  };
-  return messages[status] ?? `שגיאה לא צפויה (${status})`;
-}

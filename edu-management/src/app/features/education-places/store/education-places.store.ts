@@ -1,6 +1,12 @@
+/**
+ * ניהול מצב פנימיות — Signal-based store (ללא NgRx) לפשטות בפרויקט Hands-On.
+ *
+ * loadSeq: אם המשתמש מחליף מסנן או מרענן מהר, תשובה איטית ישנה לא תדרוס תשובה חדשה.
+ *
+ * async/await ב-performLoad: קריאות API עוברות דרך *Async בשירות; קל יותר לקרוא ולתחזק ממנויי RxJS
+ * ארוכים לטעינה חד-פעמית. שגיאות נזרקות אחרי ה-interceptor כ-ApiError.
+ */
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Subject, from, switchMap, tap } from 'rxjs';
 import { EducationPlacesService } from '../services/education-places.service';
 import {
   CreateEducationPlaceDto,
@@ -14,21 +20,19 @@ export class EducationPlacesStore {
   private readonly service = inject(EducationPlacesService);
   private readonly toast = inject(ToastService);
 
-  // ── Private writable signals ─────────────────────────────────────────
   private readonly _state = signal<AsyncState<EducationPlaceStatsDto[]>>(
     initialAsyncState([]),
   );
   private readonly _searchQuery = signal('');
   private readonly _selectedCityFilter = signal<string | null>(null);
   private readonly _saving = signal(false);
+  private loadSeq = 0;
 
-  // ── Public readonly signals ───────────────────────────────────────────
   readonly state = this._state.asReadonly();
   readonly saving = this._saving.asReadonly();
   readonly searchQuery = this._searchQuery.asReadonly();
   readonly selectedCityFilter = this._selectedCityFilter.asReadonly();
 
-  // ── Computed derived state ────────────────────────────────────────────
   readonly isLoading = computed(() => this._state().state === 'loading');
   readonly isError = computed(() => this._state().state === 'error');
   readonly error = computed(() => this._state().error);
@@ -62,42 +66,30 @@ export class EducationPlacesStore {
     this._state().data.reduce((sum, p) => sum + p.activeStudentCount, 0),
   );
 
-  // ── Load trigger (for retry support) ─────────────────────────────────
-  private readonly load$ = new Subject<void>();
-
-  constructor() {
-    // Wire load$ trigger → HTTP call → state update
-    this.load$
-      .pipe(
-        tap(() =>
-          this._state.update((s) => ({ ...s, state: 'loading', error: null })),
-        ),
-        switchMap(() =>
-          from(this.service.getAllAsync()).pipe(
-            tap({
-              next: (data) =>
-                this._state.set({ data, state: 'success', error: null }),
-              error: (err: ApiError) =>
-                this._state.update((s) => ({
-                  ...s,
-                  state: 'error',
-                  error: err,
-                })),
-            }),
-          ),
-        ),
-        takeUntilDestroyed(),
-      )
-      .subscribe();
-  }
-
-  // ── Actions ───────────────────────────────────────────────────────────
   load(): void {
-    this.load$.next();
+    void this.performLoad();
   }
 
   retry(): void {
-    this.load$.next();
+    void this.performLoad();
+  }
+
+  private async performLoad(): Promise<void> {
+    const seq = ++this.loadSeq;
+    this._state.update((s) => ({ ...s, state: 'loading', error: null }));
+
+    try {
+      const data = await this.service.getAllAsync();
+      if (seq !== this.loadSeq) return;
+      this._state.set({ data, state: 'success', error: null });
+    } catch (e) {
+      if (seq !== this.loadSeq) return;
+      this._state.update((s) => ({
+        ...s,
+        state: 'error',
+        error: e as ApiError,
+      }));
+    }
   }
 
   setSearch(query: string): void {
@@ -121,6 +113,7 @@ export class EducationPlacesStore {
         id: created.id,
         name: created.name,
         city: created.city,
+        isActive: created.isActive,
         activeStudentCount: 0,
         averageAge: 0,
       };
@@ -132,7 +125,41 @@ export class EducationPlacesStore {
       }));
       this.toast.success(`הפנימייה "${created.name}" נוספה בהצלחה.`);
     } catch {
-      /* interceptor + toast */
+      /* טוסט שגיאה מטופל ב-interceptor */
+    } finally {
+      this._saving.set(false);
+    }
+  }
+
+  async setPlaceActive(id: number, isActive: boolean): Promise<void> {
+    this._saving.set(true);
+    try {
+      const updated = await this.service.setActiveAsync(id, isActive);
+      this._state.update((s) => ({
+        ...s,
+        data: s.data.map((p) => (p.id === id ? { ...p, isActive: updated.isActive } : p)),
+      }));
+      this.toast.success(
+        isActive ? 'הפנימייה סומנה כפעילה.' : 'הפנימייה סומנה כלא פעילה.',
+      );
+    } catch {
+      /* interceptor */
+    } finally {
+      this._saving.set(false);
+    }
+  }
+
+  async deletePlace(id: number, name: string): Promise<void> {
+    this._saving.set(true);
+    try {
+      await this.service.deleteAsync(id);
+      this._state.update((s) => ({
+        ...s,
+        data: s.data.filter((p) => p.id !== id),
+      }));
+      this.toast.success(`הפנימייה "${name}" נמחקה.`);
+    } catch {
+      /* interceptor */
     } finally {
       this._saving.set(false);
     }

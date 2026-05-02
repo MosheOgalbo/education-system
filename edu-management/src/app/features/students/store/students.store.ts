@@ -1,6 +1,10 @@
+/**
+ * מצב תלמידים לפי פנימייה. אותם עקרונות כמו EducationPlacesStore:
+ * loadSeq למניעת race בין טעינות, async/await לשכבת הרשת, עדכון אופטימיסטי של הרשימה אחרי create/update/delete.
+ *
+ * סינון פעיל/לא פעיל נעשה ב-computed מקומי כדי לא לפגוע בנתונים שכבר נטענו מהשרת.
+ */
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Subject, from, switchMap, tap } from 'rxjs';
 import { StudentsService } from '../services/students.service';
 import { StudentDto, CreateStudentDto, UpdateStudentDto } from '../../../core/models/student.model';
 import { AsyncState, ApiError, initialAsyncState } from '../../../core/models/api-error.model';
@@ -14,6 +18,7 @@ export class StudentsStore {
   private readonly _state = signal<AsyncState<StudentDto[]>>(initialAsyncState([]));
   private readonly _educationPlaceId = signal<number | null>(null);
   private readonly _filterActive = signal<boolean | null>(null);
+  private loadSeq = 0;
 
   readonly state = this._state.asReadonly();
   readonly isLoading = computed(() => this._state().state === 'loading');
@@ -30,38 +35,35 @@ export class StudentsStore {
   readonly activeCount = computed(() => this._state().data.filter((s) => s.isActive).length);
   readonly inactiveCount = computed(() => this._state().data.filter((s) => !s.isActive).length);
 
-  private readonly load$ = new Subject<number>();
   private readonly isSaving = signal(false);
   readonly saving = this.isSaving.asReadonly();
 
-  constructor() {
-    this.load$
-      .pipe(
-        tap((id) => {
-          this._educationPlaceId.set(id);
-          this._state.update((s) => ({ ...s, state: 'loading', error: null }));
-        }),
-        switchMap((id) =>
-          from(this.service.getByEducationPlaceAsync(id)).pipe(
-            tap({
-              next: (data) => this._state.set({ data, state: 'success', error: null }),
-              error: (err: ApiError) =>
-                this._state.update((s) => ({ ...s, state: 'error', error: err })),
-            }),
-          ),
-        ),
-        takeUntilDestroyed(),
-      )
-      .subscribe();
-  }
-
   load(educationPlaceId: number): void {
-    this.load$.next(educationPlaceId);
+    void this.performLoad(educationPlaceId);
   }
 
   retry(): void {
     const id = this._educationPlaceId();
-    if (id != null) this.load$.next(id);
+    if (id != null) void this.performLoad(id);
+  }
+
+  private async performLoad(educationPlaceId: number): Promise<void> {
+    const seq = ++this.loadSeq;
+    this._educationPlaceId.set(educationPlaceId);
+    this._state.update((s) => ({ ...s, state: 'loading', error: null }));
+
+    try {
+      const data = await this.service.getByEducationPlaceAsync(educationPlaceId);
+      if (seq !== this.loadSeq) return;
+      this._state.set({ data, state: 'success', error: null });
+    } catch (e) {
+      if (seq !== this.loadSeq) return;
+      this._state.update((s) => ({
+        ...s,
+        state: 'error',
+        error: e as ApiError,
+      }));
+    }
   }
 
   setActiveFilter(value: boolean | null): void {
@@ -75,7 +77,7 @@ export class StudentsStore {
       this._state.update((s) => ({ ...s, data: [...s.data, student] }));
       this.toast.success(`התלמיד "${student.name}" נוסף בהצלחה.`);
     } catch {
-      /* interceptor + toast */
+      /* טוסט שגיאה מטופל ב-interceptor */
     } finally {
       this.isSaving.set(false);
     }
@@ -91,7 +93,7 @@ export class StudentsStore {
       }));
       this.toast.success(`פרטי "${updated.name}" עודכנו.`);
     } catch {
-      /* interceptor + toast */
+      /* טוסט שגיאה מטופל ב-interceptor */
     } finally {
       this.isSaving.set(false);
     }
@@ -106,7 +108,7 @@ export class StudentsStore {
       }));
       this.toast.success(`"${name}" הוסר מהמערכת.`);
     } catch {
-      /* interceptor + toast */
+      /* טוסט שגיאה מטופל ב-interceptor */
     }
   }
 }

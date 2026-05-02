@@ -2,6 +2,7 @@ export interface EducationPlaceStatsDto {
   id: number;
   name: string;
   city: string;
+  isActive: boolean;
   activeStudentCount: number;
   averageAge: number;
 }
@@ -11,6 +12,7 @@ export interface EducationPlaceDto {
   id: number;
   name: string;
   city: string;
+  isActive: boolean;
 }
 
 export interface CreateEducationPlaceDto {

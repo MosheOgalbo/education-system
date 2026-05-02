@@ -3,8 +3,10 @@
   top: 0;
   z-index: 100;
   min-height: 64px;
-  padding: 0 20px;
+  padding: 8px 16px;
   gap: 12px;
+  flex-wrap: wrap;
+  height: auto;
   border-bottom: 3px solid var(--gov-header-border);
   box-shadow: 0 2px 8px rgba(0, 35, 80, 0.25);
 
@@ -69,6 +71,18 @@
 }
 
 .app-main {
-  min-height: calc(100vh - 64px);
+  min-height: calc(100vh - 72px);
   background: var(--gov-page-bg);
+  box-sizing: border-box;
+}
+
+@media (max-width: 600px) {
+  .gov-topbar__title {
+    font-size: 1rem;
+  }
+
+  .gov-topbar__nav a.mat-mdc-button {
+    min-width: auto;
+    padding: 0 10px;
+  }
 }

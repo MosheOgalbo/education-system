@@ -1,3 +1,7 @@
+/**
+ * רשימת תלמידים לפנימייה. מזהה הפנימייה מה-route; שם הפנימייה נטען בנפרד לכותרת (גם אחרי רענון).
+ * useActionsMenu בטבלה: אותו דפוס UX כמו בפנימיות — תפריט פעולות במקום שורת אייקונים.
+ */
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
@@ -5,7 +9,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { firstValueFrom } from 'rxjs';
 
 import { EducationPlacesService } from '../../../education-places/services/education-places.service';
 import { StudentsStore } from '../../store/students.store';
@@ -93,7 +96,7 @@ export class StudentsPageComponent implements OnInit {
 
   private async loadPlaceName(educationPlaceId: number): Promise<void> {
     try {
-      const place = await firstValueFrom(this.placesService.getById(educationPlaceId));
+      const place = await this.placesService.getByIdAsync(educationPlaceId);
       this.placeName.set(place.name);
     } catch {
       this.placeName.set(null);

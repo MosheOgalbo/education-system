@@ -1,3 +1,7 @@
+/**
+ * גישה ל-API פנימיות. נשמר Observable לקריאות ריאקטיביות אם יידרש בעתיד;
+ * שיטות *Async עוטפות firstValueFrom כדי לאפשר async/await ב-stores ובדיאלוגים בלי subscribe ידני.
+ */
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, firstValueFrom } from 'rxjs';
@@ -25,6 +29,10 @@ export class EducationPlacesService {
     return this.http.get<EducationPlaceStatsDto>(`EducationPlaces/${id}`);
   }
 
+  getByIdAsync(id: number): Promise<EducationPlaceStatsDto> {
+    return firstValueFrom(this.getById(id));
+  }
+
   create(dto: CreateEducationPlaceDto): Observable<EducationPlaceDto> {
     return this.http.post<EducationPlaceDto>('EducationPlaces', dto);
   }
@@ -38,7 +46,21 @@ export class EducationPlacesService {
     return this.http.put<EducationPlaceStatsDto>(`EducationPlaces/${id}`, { name, city });
   }
 
+  updateAsync(id: number, dto: UpdateEducationPlaceDto): Promise<EducationPlaceStatsDto> {
+    return firstValueFrom(this.update(id, dto));
+  }
+
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`EducationPlaces/${id}`);
+  }
+
+  deleteAsync(id: number): Promise<void> {
+    return firstValueFrom(this.delete(id));
+  }
+
+  setActiveAsync(id: number, isActive: boolean): Promise<EducationPlaceDto> {
+    return firstValueFrom(
+      this.http.patch<EducationPlaceDto>(`EducationPlaces/${id}/active`, { isActive }),
+    );
   }
 }

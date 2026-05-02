@@ -28,4 +28,7 @@ fi
 echo "Applying seed data (idempotent)..."
 "${SQLCMD}" -S "${SERVER}" -U "${USER}" -P "${PASSWORD}" -C -i "/migrations/04_seed_data.sql"
 
+echo "Applying additive migrations (idempotent)..."
+"${SQLCMD}" -S "${SERVER}" -U "${USER}" -P "${PASSWORD}" -C -i "/migrations/05_education_place_is_active.sql"
+
 echo "Database initialization completed."

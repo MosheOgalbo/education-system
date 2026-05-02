@@ -1,3 +1,16 @@
+/**
+ * טבלה גנרית ל-Material — החלטות עיצוב ו-UX (לראיון):
+ *
+ * 1) dir="ltr" על ה-table בתוך אפליקציה dir="rtl": MatTable ב-RTL עלול ליישר כותרות מול תאים
+ *    בצורה שגויה; מבנה עמודות LTR + direction:rtl בתוך התא שומר על עקביות ועדיין תומך בעברית.
+ *
+ * 2) תפריט פעולות (more_horiz): מצמצם עומס ויזואלי, מקל על מובייל, ומונע לחיצות שגויות
+ *    לעומת שורה שלמה שניתן ללחוץ עליה — rowClickable נשלט מההורה.
+ *
+ * 3) OnPush: ביצועים טובים יותר כשהקלטים (signals/inputs) לא משתנים; מתאים לטבלאות גדולות.
+ *
+ * 4) מיון עם localeCompare('he', { numeric: true }) — סדר אלפביתי/מספרי נכון לעברית.
+ */
 import {
   Component,
   computed,
@@ -13,6 +26,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatMenuModule } from '@angular/material/menu';
 import { ColumnDef, TableAction, SortState } from './generic-table.types';
 
 @Component({
@@ -27,11 +41,14 @@ import { ColumnDef, TableAction, SortState } from './generic-table.types';
     MatIconModule,
     MatTooltipModule,
     MatChipsModule,
+    MatMenuModule,
   ],
   template: `
-    <div class="table-wrapper mat-elevation-z2">
+    <div class="table-wrapper mat-elevation-z2 scroll-x">
+      <!-- min-width + overflow-x: במסכים צרים הטבלה נגללת אופקית במקום למעוך עמודות -->
       <table
         mat-table
+        dir="ltr"
         [dataSource]="sortedData()"
         matSort
         (matSortChange)="onSort($event)"
@@ -64,18 +81,52 @@ import { ColumnDef, TableAction, SortState } from './generic-table.types';
 
         @if (actions().length > 0) {
           <ng-container matColumnDef="__actions">
-            <th mat-header-cell *matHeaderCellDef class="align-right">פעולות</th>
-            <td mat-cell *matCellDef="let row" class="align-right actions-cell">
-              @for (action of actions(); track action.label) {
+            <th mat-header-cell *matHeaderCellDef class="align-center actions-header">פעולות</th>
+            <td mat-cell *matCellDef="let row" class="align-center actions-cell">
+              @if (useActionsMenu()) {
                 <button
                   mat-icon-button
-                  [color]="action.color ?? 'primary'"
-                  [matTooltip]="action.tooltip ?? action.label"
-                  [disabled]="action.disabled ? action.disabled(row) : false"
-                  (click)="action.handler(row); $event.stopPropagation()"
+                  type="button"
+                  color="primary"
+                  class="actions-menu-trigger"
+                  [matMenuTriggerFor]="rowMenu"
+                  matTooltip="פעולות"
+                  aria-label="פתיחת תפריט פעולות"
+                  (click)="$event.stopPropagation()"
                 >
-                  <mat-icon>{{ action.icon }}</mat-icon>
+                  <!-- more_horiz: שלוש נקודות אופקיות — קונבנציית «עוד פעולות» נפוצה במובייל ובממשקי ניהול -->
+                  <mat-icon>more_horiz</mat-icon>
                 </button>
+                <mat-menu #rowMenu="matMenu" class="actions-mat-menu">
+                  @for (action of actions(); track $index) {
+                    <button
+                      mat-menu-item
+                      type="button"
+                      [disabled]="action.disabled ? action.disabled(row) : false"
+                      [class.actions-mat-menu__item--warn]="action.color === 'warn'"
+                      (click)="action.handler(row)"
+                    >
+                      <mat-icon>{{ action.iconFn ? action.iconFn(row) : action.icon }}</mat-icon>
+                      <span>{{ action.labelFn ? action.labelFn(row) : action.label }}</span>
+                    </button>
+                  }
+                </mat-menu>
+              } @else {
+                @for (action of actions(); track action.label) {
+                  <button
+                    mat-icon-button
+                    [color]="action.color ?? 'primary'"
+                    [matTooltip]="
+                      action.tooltipFn
+                        ? action.tooltipFn(row)
+                        : (action.tooltip ?? action.label)
+                    "
+                    [disabled]="action.disabled ? action.disabled(row) : false"
+                    (click)="action.handler(row); $event.stopPropagation()"
+                  >
+                    <mat-icon>{{ action.iconFn ? action.iconFn(row) : action.icon }}</mat-icon>
+                  </button>
+                }
               }
             </td>
           </ng-container>
@@ -86,7 +137,9 @@ import { ColumnDef, TableAction, SortState } from './generic-table.types';
           mat-row
           *matRowDef="let row; columns: displayedColumns()"
           class="data-row"
-          (click)="rowClick.emit(row)"
+          [class.data-row--clickable]="rowClickable()"
+          [ngClass]="rowClassFn() ? rowClassFn()!(row) : ''"
+          (click)="onRowClick(row)"
         ></tr>
       </table>
 
@@ -103,21 +156,77 @@ import { ColumnDef, TableAction, SortState } from './generic-table.types';
         background: var(--gov-card);
         border: 1px solid rgba(0, 61, 122, 0.12);
         box-shadow: 0 1px 4px rgba(0, 61, 122, 0.07);
+        max-width: 100%;
+      }
+
+      .table-wrapper.scroll-x {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
       }
 
       .generic-table {
         width: 100%;
+        min-width: 640px;
+        direction: ltr;
       }
 
-      .mat-mdc-row.data-row {
+      .generic-table .mat-mdc-header-cell,
+      .generic-table .mat-mdc-cell {
+        direction: rtl;
+      }
+
+      .generic-table .align-left {
+        text-align: right;
+      }
+
+      .generic-table .align-center {
+        text-align: center;
+      }
+
+      /* כותרות עם מיון: מיון Material עטוף בקומפוננטה — ng-deep לחדירה */
+      :host ::ng-deep .generic-table .mat-mdc-header-cell.align-center .mat-sort-header-container {
+        justify-content: center;
+      }
+
+      :host ::ng-deep .generic-table .mat-mdc-header-cell.align-center .mat-sort-header-content {
+        text-align: center;
+      }
+
+      .generic-table .mat-mdc-header-cell.align-center {
+        text-align: center;
+      }
+
+      .generic-table .mat-mdc-cell.align-center {
+        text-align: center;
+      }
+
+      /* קו תחתון לכותרות + הפרדה ברורה בין שורות נתונים */
+      .generic-table .mat-mdc-header-row .mat-mdc-header-cell {
+        border-bottom: 2px solid rgba(0, 61, 122, 0.32);
+      }
+
+      .generic-table .mat-mdc-row.data-row .mat-mdc-cell {
+        border-bottom: 1px solid rgba(0, 61, 122, 0.22);
+      }
+
+      .generic-table .mat-mdc-row.data-row:last-child .mat-mdc-cell {
+        border-bottom: 1px solid rgba(0, 61, 122, 0.28);
+      }
+
+      .mat-mdc-row.data-row--clickable {
         cursor: pointer;
         transition: background-color 0.15s ease;
       }
+
+      .mat-mdc-row.data-row--inactive {
+        opacity: 0.72;
+      }
+
       .mat-mdc-header-row {
         background: var(--gov-table-header-bg) !important;
       }
 
-      .mat-mdc-row.data-row:hover {
+      .mat-mdc-row.data-row--clickable:hover {
         background-color: var(--gov-table-row-hover);
       }
 
@@ -131,8 +240,34 @@ import { ColumnDef, TableAction, SortState } from './generic-table.types';
         text-align: right;
       }
 
+      .actions-header {
+        white-space: nowrap;
+      }
+
       .actions-cell {
         white-space: nowrap;
+      }
+
+      .actions-menu-trigger {
+        /* אזור לחיצה נוח במובייל */
+        width: 44px;
+        height: 44px;
+        padding: 0;
+      }
+
+      .actions-menu-trigger mat-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+      }
+
+      ::ng-deep .actions-mat-menu .mat-mdc-menu-item .mat-icon {
+        margin-left: 12px;
+        color: var(--gov-header);
+      }
+
+      ::ng-deep .actions-mat-menu .actions-mat-menu__item--warn .mat-icon {
+        color: #c62828;
       }
 
       .table-footer {
@@ -146,10 +281,9 @@ import { ColumnDef, TableAction, SortState } from './generic-table.types';
         font-weight: 500;
       }
 
-      @media (max-width: 600px) {
-        .generic-table {
-          display: block;
-          overflow-x: auto;
+      @media (max-width: 768px) {
+        .table-wrapper.scroll-x {
+          border-radius: 8px;
         }
       }
     `,
@@ -161,6 +295,11 @@ export class GenericTableComponent<T extends object> {
   readonly actions = input<TableAction<T>[]>([]);
   readonly loading = input(false);
   readonly trackByKey = input<string>('id');
+  /** תפריט «פעולות» במקום כפתורי אייקון לכל פעולה */
+  readonly useActionsMenu = input(false);
+  /** לחיצה על שורה (כבוי כשמשתמשים בתפריט פעולות בלבד) */
+  readonly rowClickable = input(true);
+  readonly rowClassFn = input<(row: T) => string | null | undefined>();
 
   readonly rowClick = output<T>();
   readonly sortChange = output<SortState>();
@@ -185,6 +324,12 @@ export class GenericTableComponent<T extends object> {
       return direction === 'asc' ? cmp : -cmp;
     });
   });
+
+  protected onRowClick(row: T): void {
+    if (this.rowClickable()) {
+      this.rowClick.emit(row);
+    }
+  }
 
   protected onSort(sort: Sort): void {
     const state: SortState = {

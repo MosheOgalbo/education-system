@@ -29,6 +29,14 @@ public sealed class EducationPlaceService(IEducationPlaceRepository repository)
         return updated;
     }
 
+    public async Task<EducationPlaceDto> SetActiveAsync(int id, SetEducationPlaceActiveDto dto)
+    {
+        var updated = await repository.SetActiveAsync(id, dto.IsActive);
+        if (updated is null)
+            throw new NotFoundException($"פנימייה עם מזהה {id} אינה קיימת.");
+        return updated;
+    }
+
     public async Task DeleteAsync(int id)
     {
         if (!await repository.ExistsAsync(id))
