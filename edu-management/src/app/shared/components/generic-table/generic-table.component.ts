@@ -4,7 +4,7 @@
  * 1) dir="ltr" על ה-table בתוך אפליקציה dir="rtl": MatTable ב-RTL עלול ליישר כותרות מול תאים
  *    בצורה שגויה; מבנה עמודות LTR + direction:rtl בתוך התא שומר על עקביות ועדיין תומך בעברית.
  *
- * 2) תפריט פעולות (more_horiz): מצמצם עומס ויזואלי, מקל על מובייל, ומונע לחיצות שגויות
+ * 2) תפריט פעולות (more_vert — נקודות בטור): מצמצם עומס ויזואלי, מקל על מובייל, ומונע לחיצות שגויות
  *    לעומת שורה שלמה שניתן ללחוץ עליה — rowClickable נשלט מההורה.
  *
  * 3) OnPush: ביצועים טובים יותר כשהקלטים (signals/inputs) לא משתנים; מתאים לטבלאות גדולות.
@@ -94,8 +94,8 @@ import { ColumnDef, TableAction, SortState } from './generic-table.types';
                   aria-label="פתיחת תפריט פעולות"
                   (click)="$event.stopPropagation()"
                 >
-                  <!-- more_horiz: שלוש נקודות אופקיות — קונבנציית «עוד פעולות» נפוצה במובייל ובממשקי ניהול -->
-                  <mat-icon>more_horiz</mat-icon>
+                  <!-- more_vert: שלוש נקודות בטור (אנכי) — קונבנציית «עוד פעולות» -->
+                  <mat-icon>more_vert</mat-icon>
                 </button>
                 <mat-menu #rowMenu="matMenu" class="actions-mat-menu">
                   @for (action of actions(); track $index) {
