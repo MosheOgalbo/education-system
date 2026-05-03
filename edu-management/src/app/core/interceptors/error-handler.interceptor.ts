@@ -1,8 +1,8 @@
 /**
- * Interceptor מרכזי לשגיאות HTTP (מיפוי + טוסט סלקטיבי).
+ * Interceptor מרכזי לשגיאות HTTP (מיפוי + מודל פידבק סלקטיבי).
  *
- * למה לא טוסט על כל שגיאה: בקשות GET שמציגות מסך שגיאה מלא (error-state) יוצרות כפילות מעצבנת
- * אם גם נזרק טוסט. לעומת זאת ב-POST/PUT/PATCH/DELETE המשתמש צריך פידבק מיידי כי אין תמיד מסך ייעודי.
+ * למה לא הודעה על כל שגיאה: בקשות GET שמציגות מסך שגיאה מלא (error-state) יוצרות כפילות מעצבנת
+ * אם גם נזרקת הודעה. ב-POST/PUT/PATCH/DELETE המשתמש מקבל מודל מרכזי עם ניסוח השגיאה.
  *
  * למה מחזירים throwError אחרי מיפוי: שירותי ה-store עדיין יכולים לתפוס Promise ולעדכן state ל-error,
  * בזמן שההודעה המנוסחת מגיעה מ-toApiError אחיד.
@@ -23,7 +23,7 @@ export const errorHandlerInterceptor: HttpInterceptorFn = (req, next) => {
       const apiError = toApiError(error);
 
       const skipToastForAuth = error.status === 401 || error.status === 403;
-      /** טעינות (GET) מציגות מסך שגיאה מלא — טוסט כפול מיותר. פעולות שינוי עדיין מקבלות טוסט. */
+      /** טעינות (GET) מציגות מסך שגיאה מלא — מודל כפול מיותר. פעולות שינוי מקבלות מודל שגיאה. */
       const isReadOnlyRequest = req.method === 'GET' || req.method === 'HEAD';
 
       if (!skipToastForAuth && !isReadOnlyRequest) {

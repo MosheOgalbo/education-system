@@ -22,6 +22,10 @@ import {
   StudentFormDialogComponent,
   StudentDialogData,
 } from '../student-form-dialog/student-form-dialog.component';
+import {
+  ConfirmDialogComponent,
+  ConfirmDialogData,
+} from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-students-page',
@@ -142,11 +146,25 @@ export class StudentsPageComponent implements OnInit {
     });
   }
 
-  /** מחיקה לאחר אישור המשתמש. */
+  /** מחיקה לאחר אישור בדיאלוג המערכת (לא window.confirm). */
   private deleteStudent(student: StudentDto): void {
-    if (confirm(`להסיר את "${student.name}" מהמערכת?`)) {
-      void this.store.deleteStudent(student.id, student.name);
-    }
+    const ref = this.dialog.open<ConfirmDialogComponent, ConfirmDialogData, boolean>(
+      ConfirmDialogComponent,
+      {
+        width: '420px',
+        maxWidth: '95vw',
+        autoFocus: 'first-tabbable',
+        data: {
+          title: 'הסרת תלמיד',
+          message: `להסיר את "${student.name}" מהמערכת?`,
+          confirmLabel: 'הסרה',
+          destructive: true,
+        },
+      },
+    );
+    ref.afterClosed().subscribe((confirmed) => {
+      if (confirmed) void this.store.deleteStudent(student.id, student.name);
+    });
   }
 
   /** חזרה לרשימת הפנימיות. */

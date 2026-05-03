@@ -5,7 +5,7 @@ using EducationSystem.Application.Interfaces;
 namespace EducationSystem.Application.Services;
 
 /// <summary>
-/// שירות פנימיות: שליפה עם סטטיסטיקה, CRUD, וכלל מחיקה כשאין תלמידים.
+/// שירות פנימיות: שליפה עם סטטיסטיקה, CRUD, וכלל מחיקה (פנימייה לא פעילה וללא תלמידים משויכים).
 /// </summary>
 public sealed class EducationPlaceService(IEducationPlaceRepository repository)
     : IEducationPlaceService
@@ -50,6 +50,11 @@ public sealed class EducationPlaceService(IEducationPlaceRepository repository)
     {
         if (!await repository.ExistsAsync(id))
             throw new NotFoundException($"פנימייה עם מזהה {id} אינה קיימת.");
+
+        var isActive = await repository.GetIsActiveIfExistsAsync(id);
+        if (isActive == true)
+            throw new ValidationException(
+                "לא ניתן למחוק פנימייה פעילה. יש להשבית את הפנימייה (סטטוס «לא פעילה») ולאחר מכן לבצע מחיקה.");
 
         if (await repository.CountStudentsForPlaceAsync(id) > 0)
             throw new ValidationException("לא ניתן למחוק פנימייה שיש לה תלמידים משויכים.");

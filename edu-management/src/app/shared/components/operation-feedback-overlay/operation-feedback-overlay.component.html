@@ -1,0 +1,56 @@
+@if (vm().open) {
+  <div
+    class="of-layer"
+    dir="rtl"
+    role="presentation"
+    (click)="onBackdropClick($event)"
+  >
+    <div
+      class="of-panel"
+      [class.of-panel--success]="vm().variant === 'success'"
+      [class.of-panel--error]="vm().variant === 'error'"
+      (click)="$event.stopPropagation()"
+      [attr.role]="vm().variant === 'error' ? 'alertdialog' : 'dialog'"
+      aria-modal="true"
+      aria-labelledby="of-heading"
+      aria-describedby="of-message"
+    >
+      <div class="of-panel__header">
+        @if (vm().variant === 'success') {
+          <div class="of-panel__title-row">
+            <span class="of-panel__icon-wrap of-panel__icon-wrap--success" aria-hidden="true">
+              <mat-icon>check_circle</mat-icon>
+            </span>
+            <h2 class="of-panel__heading" id="of-heading">הפעולה הצליחה</h2>
+          </div>
+        } @else {
+          <div class="of-panel__title-row">
+            <span class="of-panel__icon-wrap of-panel__icon-wrap--error" aria-hidden="true">
+              <mat-icon>error</mat-icon>
+            </span>
+            <h2 class="of-panel__heading" id="of-heading">אירעה שגיאה</h2>
+          </div>
+        }
+        <button
+          matIconButton
+          type="button"
+          class="of-panel__close"
+          (click)="close()"
+          [attr.aria-label]="'סגור הודעה'"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <p class="of-panel__message" id="of-message">{{ vm().message }}</p>
+
+      @if (vm().variant === 'success') {
+        <p class="of-panel__hint">החלון ייסגר אוטומטית בעוד כמה שניות, או לחצו מחוץ לתיבה לסגירה.</p>
+      } @else {
+        <button mat-stroked-button type="button" color="primary" class="of-panel__action" (click)="close()">
+          הבנתי
+        </button>
+      }
+    </div>
+  </div>
+}

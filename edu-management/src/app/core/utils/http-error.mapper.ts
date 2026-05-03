@@ -12,13 +12,12 @@ import type { ApiError } from '../models/api-error.model';
 
 /** הופך תשובת שגיאת HTTP להודעת ApiError אחידה לצג ולטוסטים. */
 export function toApiError(error: HttpErrorResponse): ApiError {
-  const body = error.error;
-  if (isStructuredApiError(body)) {
+  const structured = parseStructuredApiBody(error.error);
+  if (structured) {
     return {
-      statusCode: Number(body.statusCode ?? error.status) || error.status,
-      message: String(body.message),
-      timestamp:
-        typeof body.timestamp === 'string' ? body.timestamp : new Date().toISOString(),
+      statusCode: structured.statusCode,
+      message: structured.message,
+      timestamp: structured.timestamp ?? new Date().toISOString(),
     };
   }
 
@@ -29,15 +28,30 @@ export function toApiError(error: HttpErrorResponse): ApiError {
   };
 }
 
-/** בודק אם גוף השגיאה מהשרת בפורמט המובנה שלנו. */
-function isStructuredApiError(body: unknown): body is ApiError {
-  return (
-    typeof body === 'object' &&
-    body !== null &&
-    'message' in body &&
-    typeof (body as ApiError).message === 'string' &&
-    'statusCode' in body
-  );
+/**
+ * גוף שגיאה מה-API (GlobalExceptionMiddleware) — תומך ב-PascalCase מהשרת (.NET)
+ * וב-camelCase, כדי שהמודל יציג את ה-message העסקי ולא הודעת 400 גנרית.
+ */
+function parseStructuredApiBody(
+  body: unknown,
+): Pick<ApiError, 'statusCode' | 'message'> & { timestamp?: string } | null {
+  if (typeof body !== 'object' || body === null) return null;
+  const o = body as Record<string, unknown>;
+  const rawMessage = o['message'] ?? o['Message'];
+  const rawStatus = o['statusCode'] ?? o['StatusCode'];
+  const rawTimestamp = o['timestamp'] ?? o['Timestamp'];
+
+  if (typeof rawMessage !== 'string' || rawMessage.length === 0) return null;
+  if (typeof rawStatus !== 'number' && typeof rawStatus !== 'string') return null;
+
+  const statusCode = typeof rawStatus === 'number' ? rawStatus : Number(rawStatus);
+  if (!Number.isFinite(statusCode)) return null;
+
+  return {
+    statusCode,
+    message: rawMessage,
+    timestamp: typeof rawTimestamp === 'string' ? rawTimestamp : undefined,
+  };
 }
 
 /** הודעה בעברית לפי קוד סטטוס כשאין גוף מובנה מה-API. */

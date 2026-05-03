@@ -7,6 +7,8 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 
+import { OperationFeedbackOverlayComponent } from './shared/components/operation-feedback-overlay/operation-feedback-overlay.component';
+
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -17,6 +19,7 @@ import { MatIconModule } from '@angular/material/icon';
     MatToolbarModule,
     MatButtonModule,
     MatIconModule,
+    OperationFeedbackOverlayComponent,
   ],
   template: `
     <mat-toolbar class="app-toolbar gov-topbar" color="primary">
@@ -44,6 +47,8 @@ import { MatIconModule } from '@angular/material/icon';
     <main class="app-main">
       <router-outlet />
     </main>
+
+    <app-operation-feedback-overlay />
   `,
   styleUrl: './app.component.scss',
 })

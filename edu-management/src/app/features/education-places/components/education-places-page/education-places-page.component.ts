@@ -29,6 +29,10 @@ import {
   ColumnDef,
   TableAction,
 } from '../../../../shared/components/generic-table/generic-table.types';
+import {
+  ConfirmDialogComponent,
+  ConfirmDialogData,
+} from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-education-places-page',
@@ -137,15 +141,25 @@ export class EducationPlacesPageComponent implements OnInit {
     void this.store.setPlaceActive(row.id, !row.isActive);
   }
 
-  /** מחיקה לאחר confirm. */
+  /** מחיקה לאחר אישור בדיאלוג המערכת (לא window.confirm). */
   protected confirmDeletePlace(row: EducationPlaceStatsDto): void {
-    if (
-      confirm(
-        `למחוק את הפנימייה "${row.name}"? לא ניתן למחוק אם יש תלמידים משויכים.`,
-      )
-    ) {
-      void this.store.deletePlace(row.id, row.name);
-    }
+    const ref = this.dialog.open<ConfirmDialogComponent, ConfirmDialogData, boolean>(
+      ConfirmDialogComponent,
+      {
+        width: '420px',
+        maxWidth: '95vw',
+        autoFocus: 'first-tabbable',
+        data: {
+          title: 'מחיקת פנימייה',
+          message: `למחוק את הפנימייה "${row.name}" מהמערכת? מחיקה אפשרית רק כשהפנימייה מסומנת כלא פעילה ואין תלמידים משויכים.`,
+          confirmLabel: 'מחיקה',
+          destructive: true,
+        },
+      },
+    );
+    ref.afterClosed().subscribe((confirmed) => {
+      if (confirmed) void this.store.deletePlace(row.id, row.name);
+    });
   }
 
   /** עדכון מילת חיפוש ב-store. */

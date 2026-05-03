@@ -81,7 +81,7 @@ public sealed class EducationPlacesController(IEducationPlaceService service) : 
     /// </summary>
     /// <remarks>
     /// 204 ללא גוף בהצלחה.
-    /// 400 כשיש תלמידים משויכים.
+    /// 400 כשהפנימייה פעילה, או כשיש תלמידים משויכים.
     /// 404 כש-<paramref name="id"/> לא קיים.
     /// </remarks>
     [HttpDelete("{id:int}")]
