@@ -1,3 +1,6 @@
+/**
+ * שדה חיפוש עם Material Autocomplete; מממש ControlValueAccessor לשילוב בטפסים; debounce לסינון.
+ */
 import {
   Component,
   ChangeDetectionStrategy,

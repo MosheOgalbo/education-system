@@ -1,3 +1,6 @@
+/**
+ * הגדרת אפליקציה גלובלית: עברית, Router, HTTP עם interceptors, Material (דיאלוג + Snackbar), אנימציות.
+ */
 import { registerLocaleData } from '@angular/common';
 import localeHe from '@angular/common/locales/he';
 import { ApplicationConfig, importProvidersFrom, LOCALE_ID, provideZoneChangeDetection } from '@angular/core';

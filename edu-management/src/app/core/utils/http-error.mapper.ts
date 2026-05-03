@@ -29,6 +29,7 @@ export function toApiError(error: HttpErrorResponse): ApiError {
   };
 }
 
+/** בודק אם גוף השגיאה מהשרת בפורמט המובנה שלנו. */
 function isStructuredApiError(body: unknown): body is ApiError {
   return (
     typeof body === 'object' &&
@@ -39,6 +40,7 @@ function isStructuredApiError(body: unknown): body is ApiError {
   );
 }
 
+/** הודעה בעברית לפי קוד סטטוס כשאין גוף מובנה מה-API. */
 function friendlyHttpMessage(error: HttpErrorResponse): string {
   const status = error.status;
 
@@ -74,8 +76,10 @@ function friendlyHttpMessage(error: HttpErrorResponse): string {
   return `אירעה שגיאה בלתי צפויה (קוד ${status}).`;
 }
 
+/** סוג תצוגה לרכיב שגיאה (צבע/אייקון). */
 export type ErrorPresentationVariant = 'generic' | 'network' | 'server' | 'notfound';
 
+/** ממפה קוד סטטוס ל-variant לעיצוב מסך השגיאה. */
 export function errorPresentationVariant(statusCode: number): ErrorPresentationVariant {
   if (statusCode === 0) return 'network';
   if (statusCode === 404) return 'notfound';

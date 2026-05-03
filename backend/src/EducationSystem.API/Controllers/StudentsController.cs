@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace EducationSystem.API.Controllers;
 
-/// <summary>REST API for students: list, CRUD, and idempotent upsert.</summary>
+/// <summary>
+/// REST לתלמידים: רשימה, CRUD ו-upsert אידמפוטנטי.
+/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 public sealed class StudentsController(IStudentService service) : ControllerBase
@@ -13,8 +15,8 @@ public sealed class StudentsController(IStudentService service) : ControllerBase
     /// שולפת רשימת תלמידים מהמערכת (ממוינת לפי שם).
     /// מחזירה מערך JSON; כל איבר כולל מזהה, שם, תעודת זהות, גיל, מזהה פנימייה וסטטוס פעיל.
     /// </summary>
-    /// <param name="educationPlaceId">Optional query filter: restrict results to this boarding-school id.</param>
-    /// <remarks>No request body. HTTP 200: <c>StudentDto[]</c>.</remarks>
+    /// <param name="educationPlaceId">אופציונלי: סינון לפי מזהה פנימייה.</param>
+    /// <remarks>אין גוף. 200: מערך <c>StudentDto</c>.</remarks>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll([FromQuery] int? educationPlaceId)
@@ -24,7 +26,7 @@ public sealed class StudentsController(IStudentService service) : ControllerBase
     /// שולפת תלמיד יחיד לפי מזהה מספרי.
     /// מחזירה אובייקט תלמיד מלא (אותם שדות כמו פריט ברשימה).
     /// </summary>
-    /// <remarks>HTTP 404 when <paramref name="id"/> is not found.</remarks>
+    /// <remarks>404 כש-<paramref name="id"/> לא קיים.</remarks>
     [HttpGet("{id:int}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -36,8 +38,8 @@ public sealed class StudentsController(IStudentService service) : ControllerBase
     /// מחזירה את רשומת התלמיד שנוצרה כולל המזהה החדש.
     /// </summary>
     /// <remarks>
-    /// Validates age band, unique <c>IdentityNumber</c>, existing <c>EducationPlaceId</c>.
-    /// HTTP 201 + <c>StudentDto</c>; HTTP 400 validation errors; HTTP 404 unknown place.
+    /// ולידציית גיל, ת״ז ייחודית, פנימייה קיימת ופעילה.
+    /// 201 + <c>StudentDto</c>; 400 ולידציה; 404 פנימייה לא קיימת.
     /// </remarks>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
@@ -53,7 +55,7 @@ public sealed class StudentsController(IStudentService service) : ControllerBase
     /// מעדכנת תלמיד קיים; המזהה בנתיב קובע איזו רשומה מתעדכנת.
     /// מחזירה את התלמיד לאחר העדכון.
     /// </summary>
-    /// <remarks>Same validation as create. HTTP 404 if student or place is missing.</remarks>
+    /// <remarks>אותה ולידציה כמו ביצירה. 404 אם תלמיד או פנימייה חסרים.</remarks>
     [HttpPut("{id:int}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -65,7 +67,7 @@ public sealed class StudentsController(IStudentService service) : ControllerBase
     /// מוחקת תלמיד מהמסד לצמיתות לפי מזהה בנתיב.
     /// במצב הצלחה אין גוף תשובה.
     /// </summary>
-    /// <remarks>HTTP 204 No Content or HTTP 404.</remarks>
+    /// <remarks>204 ללא גוף או 404.</remarks>
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -80,9 +82,8 @@ public sealed class StudentsController(IStudentService service) : ControllerBase
     /// מחזירה תמיד את מצב התלמיד לאחר הפעולה (גם אחרי יצירה).
     /// </summary>
     /// <remarks>
-    /// Convenience endpoint for single-call upsert semantics.
-    /// Always HTTP 200 + <c>StudentDto</c> (does not return 201 on insert).
-    /// HTTP 400 / 404 on validation or missing entities.
+    /// נקודת נוחות ל-upsert בקריאה אחת. תמיד 200 + <c>StudentDto</c> (לא 201 ביצירה).
+    /// 400 / 404 על ולידציה או ישות חסרה.
     /// </remarks>
     [HttpPost("upsert")]
     [ProducesResponseType(StatusCodes.Status200OK)]

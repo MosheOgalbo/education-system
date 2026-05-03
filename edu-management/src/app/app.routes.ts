@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 
+/** טבלת נתיבים ראשית: פנימיות (lazy), תלמידים לפי מזהה פנימייה, והפניות ברירת מחדל. */
 export const routes: Routes = [
   {
     path: '',

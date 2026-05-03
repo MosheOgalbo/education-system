@@ -4,10 +4,14 @@ using System.Text.Json;
 
 namespace EducationSystem.API.Middleware;
 
+/// <summary>
+/// מידלוור גלובלי: לוכד חריגות מהצינור ומחזיר JSON אחיד עם קוד HTTP מתאים.
+/// </summary>
 public sealed class GlobalExceptionMiddleware(
     RequestDelegate next,
     ILogger<GlobalExceptionMiddleware> logger)
 {
+    /// <summary>ממשיך לבקשה; תופס ValidationException, NotFoundException וכל השאר.</summary>
     public async Task InvokeAsync(HttpContext ctx)
     {
         try
@@ -30,13 +34,13 @@ public sealed class GlobalExceptionMiddleware(
                 "CRITICAL — Unhandled exception at {Method} {Path}",
                 ctx.Request.Method, ctx.Request.Path);
 
-            await NotifyCriticalAsync(ex, ctx);   // 🔔 נקודת חיבור לשירות התראות
+            await NotifyCriticalAsync(ex, ctx); // נקודת הרחבה: התראות למערכת ניטור
             await WriteJsonAsync(ctx, HttpStatusCode.InternalServerError,
                 "אירעה שגיאת מערכת. אנא נסה שוב מאוחר יותר.");
         }
     }
 
-    // ── Helpers ────────────────────────────────────────────────────────────
+    /// <summary>כותב גוף JSON עם statusCode, message, timestamp.</summary>
     private static async Task WriteJsonAsync(
         HttpContext ctx, HttpStatusCode status, string message)
     {
@@ -52,7 +56,7 @@ public sealed class GlobalExceptionMiddleware(
     }
 
     /// <summary>
-    /// Stub — החלף בשירות אמיתי: Email / Slack webhook / Azure Monitor alert.
+    /// מקום להחלפה בשירות אמיתי: אימייל / Slack / Azure Monitor.
     /// </summary>
     private Task NotifyCriticalAsync(Exception ex, HttpContext ctx)
     {

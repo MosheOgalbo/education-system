@@ -1,15 +1,7 @@
 /**
- * טבלה גנרית ל-Material — החלטות עיצוב ו-UX (לראיון):
- *
- * 1) dir="ltr" על ה-table בתוך אפליקציה dir="rtl": MatTable ב-RTL עלול ליישר כותרות מול תאים
- *    בצורה שגויה; מבנה עמודות LTR + direction:rtl בתוך התא שומר על עקביות ועדיין תומך בעברית.
- *
- * 2) תפריט פעולות (more_vert — נקודות בטור): מצמצם עומס ויזואלי, מקל על מובייל, ומונע לחיצות שגויות
- *    לעומת שורה שלמה שניתן ללחוץ עליה — rowClickable נשלט מההורה.
- *
- * 3) OnPush: ביצועים טובים יותר כשהקלטים (signals/inputs) לא משתנים; מתאים לטבלאות גדולות.
- *
- * 4) מיון עם localeCompare('he', { numeric: true }) — סדר אלפביתי/מספרי נכון לעברית.
+ * טבלת Material גנרית: עמודות דינמיות, מיון לקוח, פעולות בשורה (אייקונים או תפריט).
+ * `dir="ltr"` על הטבלה בתוך אפליקציית RTL — תיקון יישור MatTable; בתוך התאים נשאר RTL לעברית.
+ * OnPush לביצועים; מיון עם `localeCompare('he', { numeric: true })`.
  */
 import {
   Component,
@@ -325,12 +317,14 @@ export class GenericTableComponent<T extends object> {
     });
   });
 
+  /** לחיצה על שורה — רק אם rowClickable מופעל. */
   protected onRowClick(row: T): void {
     if (this.rowClickable()) {
       this.rowClick.emit(row);
     }
   }
 
+  /** עדכון מצב מיון מ-MatSort. */
   protected onSort(sort: Sort): void {
     const state: SortState = {
       column: sort.active,
@@ -340,6 +334,7 @@ export class GenericTableComponent<T extends object> {
     this.sortChange.emit(state);
   }
 
+  /** גישה לערך לפי מפתח, כולל נקודות (למשל a.b). */
   protected getNestedValue(obj: unknown, key: string): unknown {
     return key.split('.').reduce(
       (acc, k) =>

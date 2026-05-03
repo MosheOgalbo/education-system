@@ -1,6 +1,6 @@
 /**
- * רשימת תלמידים לפנימייה. מזהה הפנימייה מה-route; שם הפנימייה נטען בנפרד לכותרת (גם אחרי רענון).
- * useActionsMenu בטבלה: אותו דפוס UX כמו בפנימיות — תפריט פעולות במקום שורת אייקונים.
+ * דף רשימת תלמידים למוסד שנבחר ב-route (`:id`). שם הפנימייה נטען בנפרד לכותרת.
+ * טבלה עם תפריט פעולות (כמו בדף הפנימיות) לעריכה/מחיקה.
  */
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -49,6 +49,7 @@ export class StudentsPageComponent implements OnInit {
   protected readonly educationPlaceId = signal<number>(0);
   protected readonly placeName = signal<string | null>(null);
 
+  /** עמודות טבלת תלמידים. */
   protected readonly columns: ColumnDef<StudentDto>[] = [
     { key: 'name', label: 'שם מלא', sortable: true },
     { key: 'identityNumber', label: 'מספר זהות', sortable: true },
@@ -62,6 +63,7 @@ export class StudentsPageComponent implements OnInit {
     },
   ];
 
+  /** עריכה ומחיקה מתפריט פעולות. */
   protected readonly actions: TableAction<StudentDto>[] = [
     {
       icon: 'edit',
@@ -77,12 +79,14 @@ export class StudentsPageComponent implements OnInit {
     },
   ];
 
+  /** אפשרויות צ'יפ לסינון פעיל/לא פעיל ב-store. */
   protected readonly filterOptions = [
     { label: 'הכול', value: null as boolean | null },
     { label: 'פעילים', value: true },
     { label: 'לא פעילים', value: false },
   ];
 
+  /** קורא מזהה פנימייה מה-route; אם לא תקין — חזרה לרשימת הפנימיות. */
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
     if (!Number.isFinite(id) || id <= 0) {
@@ -94,6 +98,7 @@ export class StudentsPageComponent implements OnInit {
     void this.loadPlaceName(id);
   }
 
+  /** טוען שם פנימייה לכותרת (לא חובה להצלחת רשימת התלמידים). */
   private async loadPlaceName(educationPlaceId: number): Promise<void> {
     try {
       const place = await this.placesService.getByIdAsync(educationPlaceId);
@@ -103,6 +108,7 @@ export class StudentsPageComponent implements OnInit {
     }
   }
 
+  /** פותח דיאלוג הוספת תלמיד. */
   protected openCreateDialog(): void {
     const ref = this.dialog.open<StudentFormDialogComponent, StudentDialogData>(
       StudentFormDialogComponent,
@@ -117,6 +123,7 @@ export class StudentsPageComponent implements OnInit {
     });
   }
 
+  /** דיאלוג עריכה עם נתוני תלמיד קיימים. */
   private openEditDialog(student: StudentDto): void {
     const ref = this.dialog.open<StudentFormDialogComponent, StudentDialogData>(
       StudentFormDialogComponent,
@@ -135,12 +142,14 @@ export class StudentsPageComponent implements OnInit {
     });
   }
 
+  /** מחיקה לאחר אישור המשתמש. */
   private deleteStudent(student: StudentDto): void {
     if (confirm(`להסיר את "${student.name}" מהמערכת?`)) {
       void this.store.deleteStudent(student.id, student.name);
     }
   }
 
+  /** חזרה לרשימת הפנימיות. */
   protected goBack(): void {
     void this.router.navigate(['/education-places']);
   }

@@ -1,3 +1,4 @@
+/** שלד טעינה (placeholder) לטבלה או רשימה בזמן המתנה לנתונים. */
 import { Component, input, ChangeDetectionStrategy } from '@angular/core';
 import { NgStyle } from '@angular/common';
 

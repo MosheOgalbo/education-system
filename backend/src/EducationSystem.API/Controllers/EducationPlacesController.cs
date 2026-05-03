@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace EducationSystem.API.Controllers;
 
-/// <summary>REST API for education places (boarding schools): CRUD and aggregated student statistics.</summary>
+/// <summary>
+/// REST לפנימיות: CRUD, סטטיסטיקת תלמידים, ועדכון סטטוס פעילות (PATCH).
+/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 public sealed class EducationPlacesController(IEducationPlaceService service) : ControllerBase
@@ -14,8 +16,8 @@ public sealed class EducationPlacesController(IEducationPlaceService service) : 
     /// מחזירה מערך JSON: לכל פנימייה מזהה, שם, עיר, מספר תלמידים פעילים, וגיל ממוצע של התלמידים הפעילים בלבד.
     /// </summary>
     /// <remarks>
-    /// No request body. HTTP 200: array of <c>EducationPlaceStatsDto</c>.
-    /// Data source: stored procedure <c>sp_GetEducationPlacesWithStats</c> (JOIN + GROUP BY).
+    /// אין גוף. 200: מערך <c>EducationPlaceStatsDto</c>.
+    /// מקור נתונים: פרוצדורה <c>sp_GetEducationPlacesWithStats</c>.
     /// </remarks>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -26,7 +28,7 @@ public sealed class EducationPlacesController(IEducationPlaceService service) : 
     /// שולפת פנימייה אחת לפי מזהה מספרי.
     /// מחזירה אובייקט JSON יחיד עם אותם שדות סטטיסטיקה כמו בקריאת הרשימה המלאה.
     /// </summary>
-    /// <remarks>HTTP 404 when no <c>EducationPlace</c> exists for route <paramref name="id"/>.</remarks>
+    /// <remarks>404 כשאין פנימייה עם <paramref name="id"/>.</remarks>
     [HttpGet("{id:int}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -38,7 +40,7 @@ public sealed class EducationPlacesController(IEducationPlaceService service) : 
     /// מחזירה את הפנימייה שנוצרה כולל המזהה שנוצר אוטומטית במסד.
     /// </summary>
     /// <remarks>
-    /// HTTP 201 <c>Created</c> with body <c>EducationPlaceDto</c>; <c>Location</c> header references GET by id.
+    /// 201 + גוף <c>EducationPlaceDto</c>; כותרת <c>Location</c> ל-GET לפי מזהה.
     /// </remarks>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
@@ -53,7 +55,7 @@ public sealed class EducationPlacesController(IEducationPlaceService service) : 
     /// מעדכנת שם ועיר של פנימייה קיימת לפי המזהה בנתיב.
     /// מחזירה את אובייקט הפנימייה לאחר העדכון (ללא חישוב סטטיסטיקות בגוף התשובה).
     /// </summary>
-    /// <remarks>HTTP 404 if <paramref name="id"/> is unknown. Use GET endpoints for statistics fields.</remarks>
+    /// <remarks>404 אם <paramref name="id"/> לא ידוע. לשדות סטטיסטיקה השתמש ב-GET.</remarks>
     [HttpPut("{id:int}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -78,9 +80,9 @@ public sealed class EducationPlacesController(IEducationPlaceService service) : 
     /// מוחקת פנימייה מהמסד. במצב הצלחה אין תוכן בגוף התשובה.
     /// </summary>
     /// <remarks>
-    /// HTTP 204 No Content on success.
-    /// HTTP 400 when students are still linked (FK / business rule).
-    /// HTTP 404 when <paramref name="id"/> does not exist.
+    /// 204 ללא גוף בהצלחה.
+    /// 400 כשיש תלמידים משויכים.
+    /// 404 כש-<paramref name="id"/> לא קיים.
     /// </remarks>
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

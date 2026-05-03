@@ -5,8 +5,12 @@ using System.Data;
 
 namespace EducationSystem.Infrastructure.Repositories;
 
+/// <summary>
+/// גישה לטבלת Student ב-SQL Server באמצעות Dapper (פרמטרים — מניעת SQL injection).
+/// </summary>
 public sealed class StudentRepository(IDbConnection db) : IStudentRepository
 {
+    /// <summary>SQL אחד ל-upsert: Id ריק/אפס ⇒ INSERT, אחרת UPDATE.</summary>
     private const string UpsertSql = """
         IF @Id IS NULL OR @Id = 0
             INSERT INTO dbo.Student (Name, IdentityNumber, Age, EducationPlaceId, IsActive, CreatedAt, UpdatedAt)
@@ -22,6 +26,7 @@ public sealed class StudentRepository(IDbConnection db) : IStudentRepository
             WHERE Id = @Id
         """;
 
+    /// <inheritdoc />
     public async Task<IEnumerable<StudentDto>> GetAllAsync(int? educationPlaceId)
     {
         if (educationPlaceId is { } pid)
@@ -43,6 +48,7 @@ public sealed class StudentRepository(IDbConnection db) : IStudentRepository
         return await db.QueryAsync<StudentDto>(sqlAll);
     }
 
+    /// <inheritdoc />
     public async Task<StudentDto?> GetByIdAsync(int id)
     {
         const string sql = """
@@ -53,6 +59,7 @@ public sealed class StudentRepository(IDbConnection db) : IStudentRepository
         return await db.QuerySingleOrDefaultAsync<StudentDto>(sql, new { Id = id });
     }
 
+    /// <inheritdoc />
     public async Task<StudentDto> InsertAsync(CreateStudentDto dto)
     {
         const string sql = """
@@ -71,6 +78,7 @@ public sealed class StudentRepository(IDbConnection db) : IStudentRepository
         });
     }
 
+    /// <inheritdoc />
     public async Task<StudentDto?> UpdateAsync(int id, UpdateStudentDto dto)
     {
         const string sql = """
@@ -92,12 +100,14 @@ public sealed class StudentRepository(IDbConnection db) : IStudentRepository
         });
     }
 
+    /// <inheritdoc />
     public async Task<bool> DeleteAsync(int id)
     {
         const string sql = "DELETE FROM dbo.Student WHERE Id = @Id";
         return await db.ExecuteAsync(sql, new { Id = id }) > 0;
     }
 
+    /// <inheritdoc />
     public async Task<StudentDto> UpsertAsync(UpsertStudentDto dto)
         => await db.QuerySingleAsync<StudentDto>(UpsertSql, new
         {
@@ -109,6 +119,7 @@ public sealed class StudentRepository(IDbConnection db) : IStudentRepository
             dto.IsActive
         });
 
+    /// <inheritdoc />
     public async Task<bool> IdentityNumberExistsAsync(string identityNumber, int? excludeId = null)
     {
         const string sql = """

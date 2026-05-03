@@ -1,3 +1,4 @@
+/** ממשקי DTO לפנימיות ולסטטיסטיקה — תואמים ל-API. */
 export interface EducationPlaceStatsDto {
   id: number;
   name: string;
@@ -7,7 +8,7 @@ export interface EducationPlaceStatsDto {
   averageAge: number;
 }
 
-/** תשובת POST — ללא שדות סטטיסטיקה */
+/** תשובת POST/PUT/PATCH — ללא שדות סטטיסטיקה מחושבים. */
 export interface EducationPlaceDto {
   id: number;
   name: string;

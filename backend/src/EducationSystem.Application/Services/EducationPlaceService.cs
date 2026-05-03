@@ -4,12 +4,17 @@ using EducationSystem.Application.Interfaces;
 
 namespace EducationSystem.Application.Services;
 
+/// <summary>
+/// שירות פנימיות: שליפה עם סטטיסטיקה, CRUD, וכלל מחיקה כשאין תלמידים.
+/// </summary>
 public sealed class EducationPlaceService(IEducationPlaceRepository repository)
     : IEducationPlaceService
 {
+    /// <inheritdoc />
     public Task<IEnumerable<EducationPlaceStatsDto>> GetAllWithStatsAsync()
         => repository.GetAllWithStatsAsync();
 
+    /// <inheritdoc />
     public async Task<EducationPlaceStatsDto> GetWithStatsByIdAsync(int id)
     {
         var row = await repository.GetWithStatsByIdAsync(id);
@@ -18,9 +23,11 @@ public sealed class EducationPlaceService(IEducationPlaceRepository repository)
         return row;
     }
 
+    /// <inheritdoc />
     public Task<EducationPlaceDto> CreateAsync(CreateEducationPlaceDto dto)
         => repository.InsertAsync(dto);
 
+    /// <inheritdoc />
     public async Task<EducationPlaceDto> UpdateAsync(int id, UpdateEducationPlaceDto dto)
     {
         var updated = await repository.UpdateAsync(id, dto);
@@ -29,6 +36,7 @@ public sealed class EducationPlaceService(IEducationPlaceRepository repository)
         return updated;
     }
 
+    /// <inheritdoc />
     public async Task<EducationPlaceDto> SetActiveAsync(int id, SetEducationPlaceActiveDto dto)
     {
         var updated = await repository.SetActiveAsync(id, dto.IsActive);
@@ -37,6 +45,7 @@ public sealed class EducationPlaceService(IEducationPlaceRepository repository)
         return updated;
     }
 
+    /// <inheritdoc />
     public async Task DeleteAsync(int id)
     {
         if (!await repository.ExistsAsync(id))

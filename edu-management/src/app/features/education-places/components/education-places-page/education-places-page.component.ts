@@ -1,9 +1,6 @@
 /**
- * דף פנימיות — החלטות מוצר (לראיון):
- *
- * - BreakpointObserver (768px): במובייל כרטיסיות במקום טבלה — קריאותיות טובה יותר מטבלה צפופה.
- * - פעולות בתפריט: פחות misclick מול ניווט לתלמידים; טקסט דינמי ל-toggle פעילות דורש labelFn ב-TableAction.
- * - עמודות ממורכזות: עקביות ויזואלית לנתוני ניהול (מספרים, סטטוס).
+ * דף ניהול פנימיות: טבלה/כרטיסיות (breakpoint 768px), חיפוש וסינון עיר, דיאלוג הוספה, פעולות שורה.
+ * BreakpointObserver — במובייל כרטיסיות במקום טבלה. תפריט פעולות מפחית לחיצות שגויות; `labelFn` לטקסט דינמי ב-toggle פעילות.
  */
 import { Component, OnInit, inject, computed } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
@@ -59,12 +56,13 @@ export class EducationPlacesPageComponent implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly breakpoint = inject(BreakpointObserver);
 
-  /** מסכים צרים: כרטיסיות במקום טבלה */
+  /** מתחת ל-768px — תצוגת כרטיסיות במקום טבלה. */
   protected readonly isCompactLayout = toSignal(
     this.breakpoint.observe('(max-width: 768px)').pipe(map((r) => r.matches)),
     { initialValue: false },
   );
 
+  /** עמודות הטבלה: שם, עיר, סטטוס, מספרים, גיל ממוצע. */
   protected readonly columns: ColumnDef<EducationPlaceStatsDto>[] = [
     { key: 'name', label: 'שם פנימייה', sortable: true, align: 'center' },
     { key: 'city', label: 'עיר', sortable: true, align: 'center' },
@@ -92,6 +90,7 @@ export class EducationPlacesPageComponent implements OnInit {
     },
   ];
 
+  /** תפריט פעולות לשורה: תלמידים, הפעלה/השבתה, מחיקה. */
   protected readonly actions: TableAction<EducationPlaceStatsDto>[] = [
     {
       icon: 'school',
@@ -114,25 +113,31 @@ export class EducationPlacesPageComponent implements OnInit {
     },
   ];
 
+  /** סימון שורה ויזואלי לפנימייה לא פעילה. */
   protected readonly rowClassFn = (row: EducationPlaceStatsDto) =>
     !row.isActive ? 'data-row--inactive' : '';
 
+  /** האם יש חיפוש או סינון עיר פעיל. */
   protected readonly hasActiveFilters = computed(
     () => !!this.store.searchQuery() || !!this.store.selectedCityFilter(),
   );
 
+  /** טוען רשימת פנימיות מה-store. */
   ngOnInit(): void {
     this.store.load();
   }
 
+  /** ניווט לדף תלמידים של הפנימייה. */
   protected navigateToStudents(row: EducationPlaceStatsDto): void {
     void this.router.navigate(['/education-places', row.id, 'students']);
   }
 
+  /** היפוך סטטוס פעיל/לא פעיל בשרת ובמצב המקומי. */
   protected togglePlaceActive(row: EducationPlaceStatsDto): void {
     void this.store.setPlaceActive(row.id, !row.isActive);
   }
 
+  /** מחיקה לאחר confirm. */
   protected confirmDeletePlace(row: EducationPlaceStatsDto): void {
     if (
       confirm(
@@ -143,18 +148,22 @@ export class EducationPlacesPageComponent implements OnInit {
     }
   }
 
+  /** עדכון מילת חיפוש ב-store. */
   protected onSearchChange(query: string): void {
     this.store.setSearch(query);
   }
 
+  /** סינון לפי עיר. */
   protected onCitySelect(city: string | null): void {
     this.store.setCityFilter(city);
   }
 
+  /** איפוס חיפוש ועיר. */
   protected onClearFilters(): void {
     this.store.clearFilters();
   }
 
+  /** דיאלוג יצירת פנימייה חדשה. */
   protected openCreateDialog(): void {
     const ref = this.dialog.open<EducationPlaceFormDialogComponent, void, CreateEducationPlaceDto | undefined>(
       EducationPlaceFormDialogComponent,

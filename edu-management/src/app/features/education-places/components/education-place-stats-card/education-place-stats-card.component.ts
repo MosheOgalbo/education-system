@@ -1,3 +1,6 @@
+/**
+ * כרטיס תצוגה לנתוני סטטיסטיקה של פנימייה אחת (שימושי במובייל).
+ */
 import { DecimalPipe } from '@angular/common';
 import { Component, input } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';

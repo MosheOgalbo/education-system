@@ -1,3 +1,6 @@
+/**
+ * הודעות קצרות למשתמש (הצלחה / שגיאה / מידע) דרך MatSnackBar.
+ */
 import { Injectable, inject } from '@angular/core';
 import { MatSnackBar, MatSnackBarConfig } from '@angular/material/snack-bar';
 
@@ -10,6 +13,7 @@ export class ToastService {
     verticalPosition: 'top',
   };
 
+  /** הודעת הצלחה קצרה. */
   success(message: string): void {
     this.snackBar.open(message, '✕', {
       ...this.BASE_CONFIG,
@@ -18,6 +22,7 @@ export class ToastService {
     });
   }
 
+  /** הודעת שגיאה (משך ארוך יותר). */
   error(message: string): void {
     this.snackBar.open(message, 'סגור', {
       ...this.BASE_CONFIG,
@@ -26,6 +31,7 @@ export class ToastService {
     });
   }
 
+  /** הודעת מידע כללית. */
   info(message: string): void {
     this.snackBar.open(message, '✕', {
       ...this.BASE_CONFIG,

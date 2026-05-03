@@ -5,6 +5,8 @@
  *
  * async/await ב-performLoad: קריאות API עוברות דרך *Async בשירות; קל יותר לקרוא ולתחזק ממנויי RxJS
  * ארוכים לטעינה חד-פעמית. שגיאות נזרקות אחרי ה-interceptor כ-ApiError.
+ *
+ * המחלקה: חנות Signals לרשימת פנימיות, סינון מקומי ופעולות מול ה-API.
  */
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { EducationPlacesService } from '../services/education-places.service';
@@ -26,6 +28,7 @@ export class EducationPlacesStore {
   private readonly _searchQuery = signal('');
   private readonly _selectedCityFilter = signal<string | null>(null);
   private readonly _saving = signal(false);
+  /** מונה טעינות — דוחה תשובות ישנות אם הגיעה טעינה חדשה. */
   private loadSeq = 0;
 
   readonly state = this._state.asReadonly();
@@ -62,18 +65,22 @@ export class EducationPlacesStore {
     return items;
   });
 
+  /** סכום תלמידים פעילים בכל הפנימיות (לפי הנתונים בזיכרון). */
   readonly totalStudents = computed(() =>
     this._state().data.reduce((sum, p) => sum + p.activeStudentCount, 0),
   );
 
+  /** מתחיל טעינה מהשרת. */
   load(): void {
     void this.performLoad();
   }
 
+  /** ניסיון טעינה חוזר אחרי שגיאה. */
   retry(): void {
     void this.performLoad();
   }
 
+  /** טוען רשימה; משתמש ב-loadSeq כדי למנוע race. */
   private async performLoad(): Promise<void> {
     const seq = ++this.loadSeq;
     this._state.update((s) => ({ ...s, state: 'loading', error: null }));
@@ -92,19 +99,23 @@ export class EducationPlacesStore {
     }
   }
 
+  /** מילת חיפוש חופשית (שם או עיר). */
   setSearch(query: string): void {
     this._searchQuery.set(query);
   }
 
+  /** סינון לפי עיר נבחרת. */
   setCityFilter(city: string | null): void {
     this._selectedCityFilter.set(city);
   }
 
+  /** מאפס חיפוש וסינון עיר. */
   clearFilters(): void {
     this._searchQuery.set('');
     this._selectedCityFilter.set(null);
   }
 
+  /** יוצר פנימייה בשרת ומוסיף שורה מקומית עם סטטיסטיקה אפס. */
   async createPlace(dto: CreateEducationPlaceDto): Promise<void> {
     this._saving.set(true);
     try {
@@ -131,6 +142,7 @@ export class EducationPlacesStore {
     }
   }
 
+  /** מעדכן IsActive בשרת ובמצב המקומי. */
   async setPlaceActive(id: number, isActive: boolean): Promise<void> {
     this._saving.set(true);
     try {
@@ -149,6 +161,7 @@ export class EducationPlacesStore {
     }
   }
 
+  /** מוחק פנימייה בשרת ומסיר מהרשימה המקומית. */
   async deletePlace(id: number, name: string): Promise<void> {
     this._saving.set(true);
     try {

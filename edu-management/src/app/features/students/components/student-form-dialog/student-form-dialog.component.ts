@@ -1,3 +1,6 @@
+/**
+ * דיאלוג טופס תלמיד: מצב יצירה או עריכה; ולידציית ת״ז (9 ספרות) וגיל; מחזיר CreateStudentDto.
+ */
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -7,6 +10,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { StudentDto, CreateStudentDto } from '../../../../core/models/student.model';
 
+/** נתונים שנפתח איתם דיאלוג התלמיד (מצב + אופציונלי רשומה קיימת). */
 export interface StudentDialogData {
   mode: 'create' | 'edit';
   student?: StudentDto;
@@ -114,6 +118,7 @@ export class StudentFormDialogComponent {
     isActive: new FormControl(this.data.student?.isActive ?? true),
   });
 
+  /** מחזיר CreateStudentDto כולל educationPlaceId מהנתונים שנפתחו איתם. */
   protected submit(): void {
     if (this.form.invalid) return;
 

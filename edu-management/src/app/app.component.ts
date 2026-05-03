@@ -1,3 +1,6 @@
+/**
+ * רכיב שורש: סרגל עליון (ממשק בעברית) ואזור תוכן עם router-outlet.
+ */
 import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';

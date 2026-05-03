@@ -1,3 +1,4 @@
+/** ממשקי DTO לתלמיד — תואמים ל-JSON של ה-API (camelCase). */
 export interface StudentDto {
   id: number;
   name: string;

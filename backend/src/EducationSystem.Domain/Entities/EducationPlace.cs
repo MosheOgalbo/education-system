@@ -1,5 +1,8 @@
 namespace EducationSystem.Domain.Entities;
 
+/// <summary>
+/// ישות דומיין של פנימייה (מקבילה לטבלת EducationPlace במסד).
+/// </summary>
 public sealed class EducationPlace
 {
     public int      Id        { get; set; }

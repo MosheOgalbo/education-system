@@ -1,3 +1,6 @@
+/**
+ * נקודת כניסה לאפליקציית Angular — טוען Zone ומפעיל את רכיב השורש עם ההגדרות הגלובליות.
+ */
 import 'zone.js';
 
 import { bootstrapApplication } from '@angular/platform-browser';

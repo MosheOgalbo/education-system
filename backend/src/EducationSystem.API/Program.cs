@@ -1,3 +1,4 @@
+// נקודת כניסה לאפליקציית ASP.NET Core: רישום Serilog, DI, CORS, Swagger וה-pipeline.
 using EducationSystem.API.Middleware;
 using EducationSystem.Application.Interfaces;
 using EducationSystem.Application.Services;
@@ -9,7 +10,7 @@ using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ── Logging ────────────────────────────────────────────────────────────────
+// ── לוגים (Serilog: קונסול + קובץ מתגלגל) ───────────────────────────────────
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .Enrich.FromLogContext()
@@ -19,7 +20,7 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
-// ── Services ───────────────────────────────────────────────────────────────
+// ── שירותים: Controllers, Swagger, חיבור DB, רפוזיטורי ושירותים ─────────────
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -31,6 +32,7 @@ builder.Services.AddSwaggerGen(c =>
         c.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
 });
 
+// חיבור SQL אחד לכל בקשה (Scoped)
 builder.Services.AddScoped<IDbConnection>(_ =>
     new SqlConnection(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -39,6 +41,7 @@ builder.Services.AddScoped<IStudentRepository, StudentRepository>();
 builder.Services.AddScoped<IEducationPlaceService, EducationPlaceService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
 
+// CORS ללקוחות Angular בפיתוח (localhost) ובפרודקשן (פורטים מוגדרים)
 builder.Services.AddCors(opt =>
     opt.AddPolicy("AllowAngular", p =>
     {
@@ -63,7 +66,7 @@ builder.Services.AddCors(opt =>
         }
     }));
 
-// ── Pipeline ───────────────────────────────────────────────────────────────
+// ── Pipeline: מידלוור שגיאות, Swagger, CORS, HTTPS (אופציונלי), נתיבים ───────
 var app = builder.Build();
 
 app.UseMiddleware<GlobalExceptionMiddleware>();
@@ -77,7 +80,7 @@ app.UseSwaggerUI(c =>
 
 app.UseCors("AllowAngular");
 
-// HTTP-only hosts (e.g. Docker) have no HTTPS endpoint; skip redirect to avoid warnings/broken responses.
+// ב-Docker לעיתים אין HTTPS — משתנה סביבה מדלג על redirect
 if (Environment.GetEnvironmentVariable("DISABLE_HTTPS_REDIRECT") is not "1")
     app.UseHttpsRedirection();
 

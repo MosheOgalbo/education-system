@@ -4,6 +4,9 @@ using EducationSystem.Application.Interfaces;
 
 namespace EducationSystem.Application.Services;
 
+/// <summary>
+/// שירות תלמידים: ולידציה עסקית לפני כתיבה למסד (גיל, פנימייה פעילה, ייחודיות ת״ז).
+/// </summary>
 public sealed class StudentService(
     IStudentRepository         studentRepository,
     IEducationPlaceRepository  educationPlaceRepository) : IStudentService
@@ -11,9 +14,11 @@ public sealed class StudentService(
     private const int MinAge = 5;
     private const int MaxAge = 25;
 
+    /// <inheritdoc />
     public Task<IEnumerable<StudentDto>> GetAllAsync(int? educationPlaceId)
         => studentRepository.GetAllAsync(educationPlaceId);
 
+    /// <inheritdoc />
     public async Task<StudentDto> GetByIdAsync(int id)
     {
         var student = await studentRepository.GetByIdAsync(id);
@@ -22,6 +27,7 @@ public sealed class StudentService(
         return student;
     }
 
+    /// <inheritdoc />
     public async Task<StudentDto> CreateAsync(CreateStudentDto dto)
     {
         ValidateAge(dto.Age);
@@ -31,6 +37,7 @@ public sealed class StudentService(
         return await studentRepository.InsertAsync(dto);
     }
 
+    /// <inheritdoc />
     public async Task<StudentDto> UpdateAsync(int id, UpdateStudentDto dto)
     {
         ValidateAge(dto.Age);
@@ -44,24 +51,28 @@ public sealed class StudentService(
         return updated;
     }
 
+    /// <inheritdoc />
     public async Task DeleteAsync(int id)
     {
         if (!await studentRepository.DeleteAsync(id))
             throw new NotFoundException($"תלמיד עם מזהה {id} אינו קיים.");
     }
 
+    /// <inheritdoc />
     public async Task<StudentDto> UpsertStudentAsync(UpsertStudentDto dto)
     {
         ValidateAge(dto.Age);
         await EnsurePlaceExistsAndActive(dto.EducationPlaceId);
         await EnsureIdentityUnique(dto.IdentityNumber, dto.Id);
 
+        // עדכון לפי Id חיובי — וודא שהרשומה קיימת לפני merge במסד
         if (dto.Id is > 0 && await studentRepository.GetByIdAsync(dto.Id.Value) is null)
             throw new NotFoundException($"תלמיד עם מזהה {dto.Id} אינו קיים.");
 
         return await studentRepository.UpsertAsync(dto);
     }
 
+    /// <summary>בודק טווח גיל מותר במערכת.</summary>
     private void ValidateAge(int age)
     {
         if (age < MinAge || age > MaxAge)
@@ -82,6 +93,7 @@ public sealed class StudentService(
                 "לא ניתן לשבץ או לעדכן תלמיד לפנימייה שאינה פעילה.");
     }
 
+    /// <summary>מוודא שתעודת הזהות לא כפולה (עם התעלמות מרשומה בעת עדכון).</summary>
     private async Task EnsureIdentityUnique(string identityNumber, int? excludeId)
     {
         if (await studentRepository.IdentityNumberExistsAsync(identityNumber, excludeId))

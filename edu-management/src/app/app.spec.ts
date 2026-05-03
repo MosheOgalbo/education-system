@@ -1,3 +1,4 @@
+/** בדיקת יחידה בסיסית לרכיב השורש (נוצר בהצלחה). */
 import { LOCALE_ID } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';

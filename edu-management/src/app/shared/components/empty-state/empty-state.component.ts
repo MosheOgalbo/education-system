@@ -1,3 +1,4 @@
+/** מסך «אין נתונים» עם אייקון, כותרת וכפתור פעולה אופציונלי. */
 import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';

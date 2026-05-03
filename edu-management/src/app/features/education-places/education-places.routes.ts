@@ -1,3 +1,4 @@
+/** נתיבי פיצ'ר פנימיות — טעינה עצלה של דף הרשימה. */
 import { Routes } from '@angular/router';
 
 export const EDUCATION_PLACES_ROUTES: Routes = [

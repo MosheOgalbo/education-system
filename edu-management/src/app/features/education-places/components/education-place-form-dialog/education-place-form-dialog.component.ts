@@ -1,3 +1,6 @@
+/**
+ * דיאלוג Material: טופס Reactive להוספת פנימייה (שם + עיר); סוגר עם DTO או בלי ערך.
+ */
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -84,6 +87,7 @@ export class EducationPlaceFormDialogComponent {
     city: new FormControl('', [Validators.required, Validators.minLength(2)]),
   });
 
+  /** סוגר את הדיאלוג עם DTO אם הטופס תקין. */
   protected submit(): void {
     if (this.form.invalid) return;
     const dto: CreateEducationPlaceDto = this.form.getRawValue() as CreateEducationPlaceDto;

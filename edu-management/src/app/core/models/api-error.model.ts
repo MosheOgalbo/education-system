@@ -1,3 +1,6 @@
+/**
+ * טיפוסים למצב טעינה אסינכרוני ולשגיאות API אחידות (מסונכרן עם גוף השגיאה מהשרת).
+ */
 export interface ApiError {
   statusCode: number;
   message: string;
@@ -12,6 +15,7 @@ export interface AsyncState<T> {
   error: ApiError | null;
 }
 
+/** מצב התחלתי לפני טעינה ראשונה. */
 export function initialAsyncState<T>(data: T): AsyncState<T> {
   return { data, state: 'idle', error: null };
 }

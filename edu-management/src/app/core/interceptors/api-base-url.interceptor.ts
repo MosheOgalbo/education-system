@@ -1,12 +1,15 @@
+/**
+ * מקדים כתובת יחסית ב-baseUrl של ה-API; כתובות מוחלטות (http) נשארות ללא שינוי.
+ */
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 
 import { API_CONFIG } from '../config/api.config';
 
+/** Interceptor פונקציונלי — מחזיר Observable של הבקשה המעודכנת. */
 export const apiBaseUrlInterceptor: HttpInterceptorFn = (req, next) => {
   const { baseUrl } = inject(API_CONFIG);
 
-  // Only prefix relative URLs (skip CDN / external calls)
   if (req.url.startsWith('http')) {
     return next(req);
   }

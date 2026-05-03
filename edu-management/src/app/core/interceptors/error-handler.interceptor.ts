@@ -1,5 +1,5 @@
 /**
- * Interceptor מרכזי לשגיאות HTTP.
+ * Interceptor מרכזי לשגיאות HTTP (מיפוי + טוסט סלקטיבי).
  *
  * למה לא טוסט על כל שגיאה: בקשות GET שמציגות מסך שגיאה מלא (error-state) יוצרות כפילות מעצבנת
  * אם גם נזרק טוסט. לעומת זאת ב-POST/PUT/PATCH/DELETE המשתמש צריך פידבק מיידי כי אין תמיד מסך ייעודי.
@@ -14,6 +14,7 @@ import { catchError, throwError } from 'rxjs';
 import { ToastService } from '../services/toast.service';
 import { toApiError } from '../utils/http-error.mapper';
 
+/** פונקציית interceptor — מחזירה Observable עם catchError. */
 export const errorHandlerInterceptor: HttpInterceptorFn = (req, next) => {
   const toast = inject(ToastService);
 

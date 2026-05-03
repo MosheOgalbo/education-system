@@ -3,6 +3,8 @@
  * loadSeq למניעת race בין טעינות, async/await לשכבת הרשת, עדכון אופטימיסטי של הרשימה אחרי create/update/delete.
  *
  * סינון פעיל/לא פעיל נעשה ב-computed מקומי כדי לא לפגוע בנתונים שכבר נטענו מהשרת.
+ *
+ * המחלקה: חנות Signals לתלמידים לפי פנימייה נבחרת.
  */
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { StudentsService } from '../services/students.service';
@@ -18,6 +20,7 @@ export class StudentsStore {
   private readonly _state = signal<AsyncState<StudentDto[]>>(initialAsyncState([]));
   private readonly _educationPlaceId = signal<number | null>(null);
   private readonly _filterActive = signal<boolean | null>(null);
+  /** מניעת race בין טעינות מהירות. */
   private loadSeq = 0;
 
   readonly state = this._state.asReadonly();
@@ -38,15 +41,18 @@ export class StudentsStore {
   private readonly isSaving = signal(false);
   readonly saving = this.isSaving.asReadonly();
 
+  /** טוען תלמידים לפי מזהה פנימייה. */
   load(educationPlaceId: number): void {
     void this.performLoad(educationPlaceId);
   }
 
+  /** טעינה חוזרת לאחר שגיאה. */
   retry(): void {
     const id = this._educationPlaceId();
     if (id != null) void this.performLoad(id);
   }
 
+  /** קורא ל-API ומעדכן state; מתעלם מתשובה אם loadSeq השתנה. */
   private async performLoad(educationPlaceId: number): Promise<void> {
     const seq = ++this.loadSeq;
     this._educationPlaceId.set(educationPlaceId);
@@ -66,10 +72,12 @@ export class StudentsStore {
     }
   }
 
+  /** סינון תצוגה: null = כולם, true/false = פעילים / לא פעילים בלבד. */
   setActiveFilter(value: boolean | null): void {
     this._filterActive.set(value);
   }
 
+  /** יוצר תלמיד ומוסיף לרשימה המקומית. */
   async createStudent(dto: CreateStudentDto): Promise<void> {
     this.isSaving.set(true);
     try {
@@ -83,6 +91,7 @@ export class StudentsStore {
     }
   }
 
+  /** מעדכן תלמיד ומחליף את הרשומה בזיכרון. */
   async updateStudent(id: number, dto: UpdateStudentDto): Promise<void> {
     this.isSaving.set(true);
     try {
@@ -99,6 +108,7 @@ export class StudentsStore {
     }
   }
 
+  /** מוחק תלמיד ומסיר מהרשימה המקומית. */
   async deleteStudent(id: number, name: string): Promise<void> {
     try {
       await this.service.deleteAsync(id);
