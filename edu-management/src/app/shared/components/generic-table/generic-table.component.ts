@@ -95,6 +95,12 @@ import { ColumnDef, TableAction, SortState } from './generic-table.types';
                       mat-menu-item
                       type="button"
                       [disabled]="action.disabled ? action.disabled(row) : false"
+                      [matTooltip]="
+                        action.tooltipFn
+                          ? action.tooltipFn(row)
+                          : (action.tooltip ?? '')
+                      "
+                      matTooltipPosition="before"
                       [class.actions-mat-menu__item--warn]="action.color === 'warn'"
                       (click)="action.handler(row)"
                     >
@@ -212,6 +218,10 @@ import { ColumnDef, TableAction, SortState } from './generic-table.types';
 
       .mat-mdc-row.data-row--inactive {
         opacity: 0.72;
+      }
+
+      .mat-mdc-row.data-row--suspended {
+        background: rgba(245, 124, 0, 0.06);
       }
 
       .mat-mdc-header-row {

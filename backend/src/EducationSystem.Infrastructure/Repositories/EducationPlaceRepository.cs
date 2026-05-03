@@ -1,5 +1,6 @@
 using Dapper;
 using EducationSystem.Application.DTOs;
+using EducationSystem.Application.Enums;
 using EducationSystem.Application.Interfaces;
 using System.Data;
 
@@ -19,13 +20,13 @@ public sealed class EducationPlaceRepository(IDbConnection db) : IEducationPlace
     /// <inheritdoc />
     public async Task<EducationPlaceStatsDto?> GetWithStatsByIdAsync(int id)
     {
-        // JOIN + GROUP BY: רק תלמידים פעילים נספרים בממוצע וב-count
         const string sql = """
             SELECT
                 ep.Id,
                 ep.Name,
                 ep.City,
-                ep.IsActive,
+                ep.[Status],
+                (SELECT COUNT(1) FROM dbo.Student s2 WHERE s2.EducationPlaceId = ep.Id) AS TotalStudentCount,
                 COUNT(s.Id) AS ActiveStudentCount,
                 ISNULL(AVG(CAST(s.Age AS DECIMAL(5,2))), 0) AS AverageAge
             FROM dbo.EducationPlace ep
@@ -33,27 +34,33 @@ public sealed class EducationPlaceRepository(IDbConnection db) : IEducationPlace
                 ON  s.EducationPlaceId = ep.Id
                 AND s.IsActive = 1
             WHERE ep.Id = @Id
-            GROUP BY ep.Id, ep.Name, ep.City, ep.IsActive
+            GROUP BY ep.Id, ep.Name, ep.City, ep.[Status]
             """;
         return await db.QuerySingleOrDefaultAsync<EducationPlaceStatsDto>(sql, new { Id = id });
     }
 
     /// <inheritdoc />
-    public async Task<bool?> GetIsActiveIfExistsAsync(int id)
+    public async Task<EducationPlaceStatus?> GetStatusIfExistsAsync(int id)
     {
-        const string sql = "SELECT IsActive FROM dbo.EducationPlace WHERE Id = @Id";
-        return await db.QuerySingleOrDefaultAsync<bool?>(sql, new { Id = id });
+        const string sql = "SELECT [Status] FROM dbo.EducationPlace WHERE Id = @Id";
+        var v = await db.QuerySingleOrDefaultAsync<byte?>(sql, new { Id = id });
+        return v is null ? null : (EducationPlaceStatus)v;
     }
 
     /// <inheritdoc />
     public async Task<EducationPlaceDto> InsertAsync(CreateEducationPlaceDto dto)
     {
         const string sql = """
-            INSERT INTO dbo.EducationPlace (Name, City, IsActive)
-            OUTPUT INSERTED.Id, INSERTED.Name, INSERTED.City, INSERTED.IsActive
-            VALUES (@Name, @City, 1)
+            INSERT INTO dbo.EducationPlace (Name, City, [Status])
+            OUTPUT INSERTED.Id, INSERTED.Name, INSERTED.City, INSERTED.[Status]
+            VALUES (@Name, @City, @Status)
             """;
-        return await db.QuerySingleAsync<EducationPlaceDto>(sql, new { dto.Name, dto.City });
+        return await db.QuerySingleAsync<EducationPlaceDto>(sql, new
+        {
+            dto.Name,
+            dto.City,
+            Status = EducationPlaceStatus.Suspended,
+        });
     }
 
     /// <inheritdoc />
@@ -62,7 +69,7 @@ public sealed class EducationPlaceRepository(IDbConnection db) : IEducationPlace
         const string sql = """
             UPDATE dbo.EducationPlace
             SET Name = @Name, City = @City
-            OUTPUT INSERTED.Id, INSERTED.Name, INSERTED.City, INSERTED.IsActive
+            OUTPUT INSERTED.Id, INSERTED.Name, INSERTED.City, INSERTED.[Status]
             WHERE Id = @Id
             """;
         return await db.QuerySingleOrDefaultAsync<EducationPlaceDto>(sql,
@@ -70,16 +77,16 @@ public sealed class EducationPlaceRepository(IDbConnection db) : IEducationPlace
     }
 
     /// <inheritdoc />
-    public async Task<EducationPlaceDto?> SetActiveAsync(int id, bool isActive)
+    public async Task<EducationPlaceDto?> SetStatusAsync(int id, EducationPlaceStatus status)
     {
         const string sql = """
             UPDATE dbo.EducationPlace
-            SET IsActive = @IsActive
-            OUTPUT INSERTED.Id, INSERTED.Name, INSERTED.City, INSERTED.IsActive
+            SET [Status] = @Status
+            OUTPUT INSERTED.Id, INSERTED.Name, INSERTED.City, INSERTED.[Status]
             WHERE Id = @Id
             """;
         return await db.QuerySingleOrDefaultAsync<EducationPlaceDto>(sql,
-            new { Id = id, IsActive = isActive });
+            new { Id = id, Status = status });
     }
 
     /// <inheritdoc />
@@ -96,6 +103,44 @@ public sealed class EducationPlaceRepository(IDbConnection db) : IEducationPlace
             SELECT COUNT(1) FROM dbo.Student WHERE EducationPlaceId = @EducationPlaceId
             """;
         return await db.ExecuteScalarAsync<int>(sql, new { EducationPlaceId = educationPlaceId });
+    }
+
+    /// <inheritdoc />
+    public async Task SetSuspendedIfNoStudentsAsync(int educationPlaceId)
+    {
+        const string sql = """
+            UPDATE dbo.EducationPlace
+            SET [Status] = @Suspended
+            WHERE Id = @Id
+              AND [Status] <> @Inactive
+              AND NOT EXISTS (
+                  SELECT 1 FROM dbo.Student s WHERE s.EducationPlaceId = @Id
+              )
+            """;
+        await db.ExecuteAsync(sql, new
+        {
+            Id = educationPlaceId,
+            Suspended = EducationPlaceStatus.Suspended,
+            Inactive = EducationPlaceStatus.Inactive,
+        });
+    }
+
+    /// <inheritdoc />
+    public async Task TryPromoteSuspendedToActiveWhenHasStudentsAsync(int educationPlaceId)
+    {
+        const string sql = """
+            UPDATE dbo.EducationPlace
+            SET [Status] = @Active
+            WHERE Id = @Id
+              AND [Status] = @Suspended
+              AND EXISTS (SELECT 1 FROM dbo.Student s WHERE s.EducationPlaceId = @Id)
+            """;
+        await db.ExecuteAsync(sql, new
+        {
+            Id = educationPlaceId,
+            Active = EducationPlaceStatus.Active,
+            Suspended = EducationPlaceStatus.Suspended,
+        });
     }
 
     /// <inheritdoc />

@@ -1,6 +1,6 @@
 /**
  * דף ניהול פנימיות: טבלה/כרטיסיות (breakpoint 768px), חיפוש וסינון עיר, דיאלוג הוספה, פעולות שורה.
- * BreakpointObserver — במובייל כרטיסיות במקום טבלה. תפריט פעולות מפחית לחיצות שגויות; `labelFn` לטקסט דינמי ב-toggle פעילות.
+ * BreakpointObserver — במובייל כרטיסיות במקום טבלה. תפריט פעולות מפחית לחיצות שגויות; `labelFn` לטקסט דינמי לפי סטטוס (פעילה / השהייה / לא פעילה).
  */
 import { Component, OnInit, inject, computed } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
@@ -17,9 +17,14 @@ import { MatCardModule } from '@angular/material/card';
 import { MatMenuModule } from '@angular/material/menu';
 
 import { EducationPlacesStore } from '../../store/education-places.store';
-import { CreateEducationPlaceDto } from '../../../../core/models/education-place.model';
+import {
+  CreateEducationPlaceDto,
+  EducationPlaceStatsDto,
+  educationPlaceStatusLabel,
+  educationPlaceStatusCellClass,
+  educationPlaceDataRowClass,
+} from '../../../../core/models/education-place.model';
 import { EducationPlaceFormDialogComponent } from '../education-place-form-dialog/education-place-form-dialog.component';
-import { EducationPlaceStatsDto } from '../../../../core/models/education-place.model';
 import { GenericTableComponent } from '../../../../shared/components/generic-table/generic-table.component';
 import { AutocompleteInputComponent } from '../../../../shared/components/autocomplete-input/autocomplete-input.component';
 import { LoadingSkeletonComponent } from '../../../../shared/components/loading-skeleton/loading-skeleton.component';
@@ -71,12 +76,12 @@ export class EducationPlacesPageComponent implements OnInit {
     { key: 'name', label: 'שם פנימייה', sortable: true, align: 'center' },
     { key: 'city', label: 'עיר', sortable: true, align: 'center' },
     {
-      key: 'isActive',
+      key: 'status',
       label: 'סטטוס',
       sortable: true,
       align: 'center',
-      render: (row) => (row.isActive ? 'פעילה' : 'לא פעילה'),
-      cellClass: (row) => (row.isActive ? 'status--active' : 'status--inactive'),
+      render: (row) => educationPlaceStatusLabel(row.status),
+      cellClass: (row) => educationPlaceStatusCellClass(row.status),
     },
     {
       key: 'activeStudentCount',
@@ -94,7 +99,7 @@ export class EducationPlacesPageComponent implements OnInit {
     },
   ];
 
-  /** תפריט פעולות לשורה: תלמידים, הפעלה/השבתה, מחיקה. */
+  /** תפריט פעולות לשורה: תלמידים, מעבר לפעילה/לא פעילה, מחיקה (רק בלא פעילה). */
   protected readonly actions: TableAction<EducationPlaceStatsDto>[] = [
     {
       icon: 'school',
@@ -103,28 +108,42 @@ export class EducationPlacesPageComponent implements OnInit {
     },
     {
       icon: 'toggle_on',
-      iconFn: (row) => (row.isActive ? 'toggle_off' : 'toggle_on'),
+      iconFn: (row) => (row.status === 'inactive' ? 'toggle_on' : 'toggle_off'),
       label: '',
       labelFn: (row) =>
-        row.isActive ? 'מעבר לפנימייה לא פעילה' : 'הפיכת פנימייה לפעילה',
+        row.status === 'inactive'
+          ? 'הפעלה מחדש (פעילה או השהייה אם אין תלמידים)'
+          : 'מעבר ל«לא פעילה» (נדרש לפני מחיקה)',
       handler: (row) => this.togglePlaceActive(row),
     },
     {
       icon: 'delete',
       label: 'מחיקת פנימייה',
       color: 'warn',
+      disabled: (row) => row.status !== 'inactive' || row.totalStudentCount > 0,
+      tooltipFn: (row) => {
+        if (row.status === 'active' || row.status === 'suspended') {
+          return 'מחיקה אפשרית רק ב«לא פעילה». יש לעדכן סטטוס בתפריט הפעולות.';
+        }
+        if (row.totalStudentCount > 0) {
+          return 'יש להסיר את כל התלמידים המשויכים לפני מחיקה.';
+        }
+        return 'מחיקה סופית מהמערכת';
+      },
       handler: (row) => this.confirmDeletePlace(row),
     },
   ];
 
-  /** סימון שורה ויזואלי לפנימייה לא פעילה. */
-  protected readonly rowClassFn = (row: EducationPlaceStatsDto) =>
-    !row.isActive ? 'data-row--inactive' : '';
+  protected readonly rowClassFn = (row: EducationPlaceStatsDto) => educationPlaceDataRowClass(row.status);
 
   /** האם יש חיפוש או סינון עיר פעיל. */
   protected readonly hasActiveFilters = computed(
     () => !!this.store.searchQuery() || !!this.store.selectedCityFilter(),
   );
+
+  protected placeStatusLabel(row: EducationPlaceStatsDto): string {
+    return educationPlaceStatusLabel(row.status);
+  }
 
   /** טוען רשימת פנימיות מה-store. */
   ngOnInit(): void {
@@ -136,9 +155,20 @@ export class EducationPlacesPageComponent implements OnInit {
     void this.router.navigate(['/education-places', row.id, 'students']);
   }
 
-  /** היפוך סטטוס פעיל/לא פעיל בשרת ובמצב המקומי. */
+  /** מעבר לפעילה (או השהייה) / ללא פעילה — לפי סטטוס נוכחי. */
   protected togglePlaceActive(row: EducationPlaceStatsDto): void {
-    void this.store.setPlaceActive(row.id, !row.isActive);
+    void this.store.setPlaceActive(row.id, row.status === 'inactive');
+  }
+
+  /** אייקון בתפריט מובייל לפי סטטוס. */
+  protected toggleIcon(row: EducationPlaceStatsDto): string {
+    return row.status === 'inactive' ? 'toggle_on' : 'toggle_off';
+  }
+
+  protected toggleLabel(row: EducationPlaceStatsDto): string {
+    return row.status === 'inactive'
+      ? 'הפעלה מחדש (פעילה / השהייה)'
+      : 'מעבר ל«לא פעילה»';
   }
 
   /** מחיקה לאחר אישור בדיאלוג המערכת (לא window.confirm). */
@@ -151,7 +181,7 @@ export class EducationPlacesPageComponent implements OnInit {
         autoFocus: 'first-tabbable',
         data: {
           title: 'מחיקת פנימייה',
-          message: `למחוק את הפנימייה "${row.name}" מהמערכת? מחיקה אפשרית רק כשהפנימייה מסומנת כלא פעילה ואין תלמידים משויכים.`,
+          message: `למחוק את "${row.name}" מהמערכת? מחיקה אפשרית רק כשהסטטוס «לא פעילה» ואין תלמידים משויכים.`,
           confirmLabel: 'מחיקה',
           destructive: true,
         },

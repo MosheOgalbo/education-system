@@ -87,7 +87,8 @@
       @for (place of store.filteredItems(); track place.id) {
         <mat-card
           class="place-card"
-          [class.place-card--inactive]="!place.isActive"
+          [class.place-card--inactive]="place.status === 'inactive'"
+          [class.place-card--suspended]="place.status === 'suspended'"
           role="listitem"
         >
           <mat-card-header class="place-card__header">
@@ -112,12 +113,15 @@
                 <span>ניהול פנימייה</span>
               </button>
               <button mat-menu-item type="button" (click)="togglePlaceActive(place)">
-                <mat-icon>{{ place.isActive ? 'toggle_off' : 'toggle_on' }}</mat-icon>
-                <span>{{
-                  place.isActive ? 'מעבר לפנימייה לא פעילה' : 'הפיכת פנימייה לפעילה'
-                }}</span>
+                <mat-icon>{{ toggleIcon(place) }}</mat-icon>
+                <span>{{ toggleLabel(place) }}</span>
               </button>
-              <button mat-menu-item type="button" (click)="confirmDeletePlace(place)">
+              <button
+                mat-menu-item
+                type="button"
+                [disabled]="place.status !== 'inactive' || place.totalStudentCount > 0"
+                (click)="confirmDeletePlace(place)"
+              >
                 <mat-icon class="warn-icon">delete</mat-icon>
                 <span>מחיקת פנימייה</span>
               </button>
@@ -137,9 +141,10 @@
             </div>
             <span
               class="place-card__badge"
-              [class.place-card__badge--off]="!place.isActive"
+              [class.place-card__badge--off]="place.status === 'inactive'"
+              [class.place-card__badge--hold]="place.status === 'suspended'"
             >
-              {{ place.isActive ? 'פעילה' : 'לא פעילה' }}
+              {{ placeStatusLabel(place) }}
             </span>
           </mat-card-content>
         </mat-card>

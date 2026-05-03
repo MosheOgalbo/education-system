@@ -64,11 +64,11 @@ public sealed class EducationPlacesController(IEducationPlaceService service) : 
         => Ok(await service.UpdateAsync(id, dto));
 
     /// <summary>
-    /// מעדכן האם הפנימייה פעילה במערכת (שיבוץ תלמידים חדשים מותר רק לפנימייה פעילה).
+    /// מעדכן סטטוס תפעולי: <c>isActive: true</c> — פעילה (אם יש תלמידים) או השהייה (אם אין);
+    /// <c>isActive: false</c> — לא פעילה (מאפשר מחיקה לאחר מכן אם אין תלמידים).
     /// </summary>
     /// <remarks>
-    /// בחרנו PATCH נפרד מ-PUT של שם/עיר: עדכון «דגל» פעילות הוא פעולה חלקית (partial update) סמנטית,
-    /// לא דורש שליחה מחדש של כל שדות המשאב, ומקל על הלקוח ועל הרשאות עתידיות.
+    /// PATCH נפרד מ-PUT של שם/עיר. גוף נשאר תואם ללקוח קיים: <c>{ "isActive": bool }</c>.
     /// </remarks>
     [HttpPatch("{id:int}/active")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -81,7 +81,7 @@ public sealed class EducationPlacesController(IEducationPlaceService service) : 
     /// </summary>
     /// <remarks>
     /// 204 ללא גוף בהצלחה.
-    /// 400 כשהפנימייה פעילה, או כשיש תלמידים משויכים.
+    /// 400 כשהסטטוס אינו «לא פעילה», או כשיש תלמידים משויכים.
     /// 404 כש-<paramref name="id"/> לא קיים.
     /// </remarks>
     [HttpDelete("{id:int}")]

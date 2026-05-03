@@ -38,6 +38,9 @@ import {
       <mat-icon class="error-state__icon" aria-hidden="true">{{ view().icon }}</mat-icon>
       <h3 class="error-state__title">{{ view().title }}</h3>
       <p class="error-state__message">{{ view().body }}</p>
+      @if (view().traceId) {
+        <p class="error-state__trace" role="note">מזהה מעקב לתמיכה: {{ view().traceId }}</p>
+      }
       @if (view().hint) {
         <p class="error-state__hint">{{ view().hint }}</p>
       }
@@ -113,6 +116,15 @@ import {
         font-size: 1rem;
       }
 
+      .error-state__trace {
+        font-size: 0.8rem;
+        color: #666;
+        font-family: ui-monospace, monospace;
+        margin: 0 0 12px;
+        word-break: break-all;
+        max-width: 420px;
+      }
+
       .error-state__hint {
         color: #666;
         margin: 0 0 22px;
@@ -158,6 +170,7 @@ export class ErrorStateComponent {
         icon,
         title: errorStateTitle(err.statusCode),
         body: err.message,
+        traceId: err.traceId ?? null,
         hint: errorStateHint(err.statusCode),
       };
     }
@@ -167,6 +180,7 @@ export class ErrorStateComponent {
       icon: 'error_outline',
       title: 'אירעה שגיאה',
       body: this.message() ?? 'אירעה שגיאה בלתי צפויה.',
+      traceId: null as string | null,
       hint: null as string | null,
     };
   });

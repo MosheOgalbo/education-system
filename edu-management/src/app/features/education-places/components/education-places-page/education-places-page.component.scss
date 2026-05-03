@@ -90,6 +90,10 @@
     opacity: 0.88;
     border-style: dashed;
   }
+
+  &--suspended {
+    border-top: 4px solid #e65100;
+  }
 }
 
 .place-card__header {
@@ -153,6 +157,11 @@
   &--off {
     background: rgba(198, 40, 40, 0.1);
     color: #c62828;
+  }
+
+  &--hold {
+    background: rgba(245, 124, 0, 0.14);
+    color: #e65100;
   }
 }
 

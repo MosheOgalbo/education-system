@@ -67,9 +67,13 @@ public sealed class StudentsController(IStudentService service) : ControllerBase
     /// מוחקת תלמיד מהמסד לצמיתות לפי מזהה בנתיב.
     /// במצב הצלחה אין גוף תשובה.
     /// </summary>
-    /// <remarks>204 ללא גוף או 404.</remarks>
+    /// <remarks>
+    /// 204 ללא גוף; 404 אם התלמיד לא קיים; 400 אם הגיל אינו מאפשר הסרה מהמערכת (מעל 19).
+    /// לאחר מחיקה, פנימייה שנותרה ללא תלמידים משויכים תסומן אוטומטית כלא פעילה.
+    /// </remarks>
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(int id)
     {

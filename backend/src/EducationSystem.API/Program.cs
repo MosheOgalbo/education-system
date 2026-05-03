@@ -1,5 +1,6 @@
 // נקודת כניסה לאפליקציית ASP.NET Core: רישום Serilog, DI, CORS, Swagger וה-pipeline.
 using EducationSystem.API.Middleware;
+using EducationSystem.API.Notifications;
 using EducationSystem.Application.Interfaces;
 using EducationSystem.Application.Services;
 using EducationSystem.Infrastructure.Repositories;
@@ -21,7 +22,13 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 
 // ── שירותים: Controllers, Swagger, חיבור DB, רפוזיטורי ושירותים ─────────────
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(o =>
+    {
+        o.JsonSerializerOptions.Converters.Add(
+            new System.Text.Json.Serialization.JsonStringEnumConverter(
+                System.Text.Json.JsonNamingPolicy.CamelCase));
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -40,6 +47,9 @@ builder.Services.AddScoped<IEducationPlaceRepository, EducationPlaceRepository>(
 builder.Services.AddScoped<IStudentRepository, StudentRepository>();
 builder.Services.AddScoped<IEducationPlaceService, EducationPlaceService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
+
+// התראות על שגיאות קריטיות (500) — Singleton; החלף במימוש ששולח ל-Sentry/Slack וכו'.
+builder.Services.AddSingleton<ICriticalErrorNotifier, LoggingCriticalErrorNotifier>();
 
 // CORS ללקוחות Angular בפיתוח (localhost) ובפרודקשן (פורטים מוגדרים)
 builder.Services.AddCors(opt =>

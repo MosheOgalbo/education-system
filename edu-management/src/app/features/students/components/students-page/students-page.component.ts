@@ -26,6 +26,7 @@ import {
   ConfirmDialogComponent,
   ConfirmDialogData,
 } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
+import { ToastService } from '../../../../core/services/toast.service';
 
 @Component({
   selector: 'app-students-page',
@@ -49,6 +50,7 @@ export class StudentsPageComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
   private readonly placesService = inject(EducationPlacesService);
+  private readonly toast = inject(ToastService);
 
   protected readonly educationPlaceId = signal<number>(0);
   protected readonly placeName = signal<string | null>(null);
@@ -79,6 +81,11 @@ export class StudentsPageComponent implements OnInit {
       icon: 'delete',
       label: 'מחיקה',
       color: 'warn',
+      disabled: (row) => row.age > 19,
+      tooltipFn: (row) =>
+        row.age > 19
+          ? 'הסרה מהמערכת מותרת רק לתלמידים בגיל עד 19. ניתן לערוך את הרישום או לסמן כלא פעיל.'
+          : 'הסרת תלמיד מהמערכת (לאחר אישור)',
       handler: (row) => this.deleteStudent(row),
     },
   ];
@@ -148,6 +155,13 @@ export class StudentsPageComponent implements OnInit {
 
   /** מחיקה לאחר אישור בדיאלוג המערכת (לא window.confirm). */
   private deleteStudent(student: StudentDto): void {
+    if (student.age > 19) {
+      this.toast.info(
+        `לא ניתן להסיר את "${student.name}" מהמערכת — מותר רק לגיל עד 19. ניתן לעדכן פרטים או לסמן את הרישום כלא פעיל.`,
+      );
+      return;
+    }
+
     const ref = this.dialog.open<ConfirmDialogComponent, ConfirmDialogData, boolean>(
       ConfirmDialogComponent,
       {
@@ -155,8 +169,8 @@ export class StudentsPageComponent implements OnInit {
         maxWidth: '95vw',
         autoFocus: 'first-tabbable',
         data: {
-          title: 'הסרת תלמיד',
-          message: `להסיר את "${student.name}" מהמערכת?`,
+          title: 'הסרת תלמיד מהמערכת',
+          message: `להסיר את "${student.name}" מהמערכת? פנימייה שנותרת ללא תלמידים תסומן אוטומטית כלא פעילה.`,
           confirmLabel: 'הסרה',
           destructive: true,
         },

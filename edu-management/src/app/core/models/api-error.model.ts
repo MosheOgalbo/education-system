@@ -5,6 +5,8 @@ export interface ApiError {
   statusCode: number;
   message: string;
   timestamp: string;
+  /** מזהה מעקב מהשרת (כשקיים) — לתמיכה טכנית ב-500/400. */
+  traceId?: string;
 }
 
 export type LoadingState = 'idle' | 'loading' | 'success' | 'error';

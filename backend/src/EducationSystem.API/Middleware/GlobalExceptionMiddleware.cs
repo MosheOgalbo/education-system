@@ -1,4 +1,6 @@
 using EducationSystem.Application.Exceptions;
+using EducationSystem.Application.Interfaces;
+using EducationSystem.Application.Models;
 using System.Net;
 using System.Text.Json;
 
@@ -6,6 +8,8 @@ namespace EducationSystem.API.Middleware;
 
 /// <summary>
 /// מידלוור גלובלי: לוכד חריגות מהצינור ומחזיר JSON אחיד עם קוד HTTP מתאים.
+/// Serilog + <see cref="ILogger"/> — לוגים מובנים עם Scope (TraceId, Path).
+/// שגיאות 500 — קריאה ל-<see cref="ICriticalErrorNotifier"/> (DI) לפני תשובה ללקוח.
 /// </summary>
 public sealed class GlobalExceptionMiddleware(
     RequestDelegate next,
@@ -20,25 +24,50 @@ public sealed class GlobalExceptionMiddleware(
         }
         catch (ValidationException ex)
         {
-            logger.LogWarning("Validation: {Message}", ex.Message);
+            using (BeginRequestScope(ctx))
+                logger.LogWarning(ex, "Validation | {Method} {Path} | {Message}",
+                    ctx.Request.Method, ctx.Request.Path, ex.Message);
             await WriteJsonAsync(ctx, HttpStatusCode.BadRequest, ex.Message);
         }
         catch (NotFoundException ex)
         {
-            logger.LogWarning("NotFound: {Message}", ex.Message);
+            using (BeginRequestScope(ctx))
+                logger.LogWarning(ex, "NotFound | {Method} {Path} | {Message}",
+                    ctx.Request.Method, ctx.Request.Path, ex.Message);
             await WriteJsonAsync(ctx, HttpStatusCode.NotFound, ex.Message);
         }
         catch (Exception ex)
         {
-            logger.LogCritical(ex,
-                "CRITICAL — Unhandled exception at {Method} {Path}",
-                ctx.Request.Method, ctx.Request.Path);
+            using (BeginRequestScope(ctx))
+            {
+                logger.LogCritical(ex,
+                    "CRITICAL — Unhandled exception at {Method} {Path}",
+                    ctx.Request.Method, ctx.Request.Path);
 
-            await NotifyCriticalAsync(ex, ctx); // נקודת הרחבה: התראות למערכת ניטור
+                var notifier = ctx.RequestServices.GetService<ICriticalErrorNotifier>();
+                if (notifier is not null)
+                {
+                    var alertCtx = new CriticalErrorContext(
+                        ctx.TraceIdentifier,
+                        ctx.Request.Method,
+                        ctx.Request.Path.Value ?? string.Empty,
+                        ctx.Request.QueryString.Value);
+                    await notifier.NotifyCriticalAsync(ex, alertCtx, ctx.RequestAborted);
+                }
+            }
+
             await WriteJsonAsync(ctx, HttpStatusCode.InternalServerError,
                 "אירעה שגיאת מערכת. אנא נסה שוב מאוחר יותר.");
         }
     }
+
+    private IDisposable? BeginRequestScope(HttpContext ctx) =>
+        logger.BeginScope(new Dictionary<string, object?>
+        {
+            ["TraceId"] = ctx.TraceIdentifier,
+            ["RequestPath"] = ctx.Request.Path.Value,
+            ["RequestMethod"] = ctx.Request.Method,
+        });
 
     /// <summary>כותב גוף JSON עם statusCode, message, timestamp.</summary>
     private static async Task WriteJsonAsync(
@@ -51,17 +80,8 @@ public sealed class GlobalExceptionMiddleware(
         {
             StatusCode = (int)status,
             Message = message,
+            TraceId = ctx.TraceIdentifier,
             Timestamp = DateTime.UtcNow
         }));
-    }
-
-    /// <summary>
-    /// מקום להחלפה בשירות אמיתי: אימייל / Slack / Azure Monitor.
-    /// </summary>
-    private Task NotifyCriticalAsync(Exception ex, HttpContext ctx)
-    {
-        logger.LogError("ALERT | {Type} | {Path} | {Msg}",
-            ex.GetType().Name, ctx.Request.Path, ex.Message);
-        return Task.CompletedTask;
     }
 }

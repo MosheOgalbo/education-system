@@ -18,6 +18,7 @@ export function toApiError(error: HttpErrorResponse): ApiError {
       statusCode: structured.statusCode,
       message: structured.message,
       timestamp: structured.timestamp ?? new Date().toISOString(),
+      traceId: structured.traceId,
     };
   }
 
@@ -34,12 +35,13 @@ export function toApiError(error: HttpErrorResponse): ApiError {
  */
 function parseStructuredApiBody(
   body: unknown,
-): Pick<ApiError, 'statusCode' | 'message'> & { timestamp?: string } | null {
+): Pick<ApiError, 'statusCode' | 'message' | 'traceId'> & { timestamp?: string } | null {
   if (typeof body !== 'object' || body === null) return null;
   const o = body as Record<string, unknown>;
   const rawMessage = o['message'] ?? o['Message'];
   const rawStatus = o['statusCode'] ?? o['StatusCode'];
   const rawTimestamp = o['timestamp'] ?? o['Timestamp'];
+  const rawTrace = o['traceId'] ?? o['TraceId'];
 
   if (typeof rawMessage !== 'string' || rawMessage.length === 0) return null;
   if (typeof rawStatus !== 'number' && typeof rawStatus !== 'string') return null;
@@ -47,10 +49,13 @@ function parseStructuredApiBody(
   const statusCode = typeof rawStatus === 'number' ? rawStatus : Number(rawStatus);
   if (!Number.isFinite(statusCode)) return null;
 
+  const traceId = typeof rawTrace === 'string' && rawTrace.length > 0 ? rawTrace : undefined;
+
   return {
     statusCode,
     message: rawMessage,
     timestamp: typeof rawTimestamp === 'string' ? rawTimestamp : undefined,
+    traceId,
   };
 }
 

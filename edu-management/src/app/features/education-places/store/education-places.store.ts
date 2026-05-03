@@ -124,7 +124,8 @@ export class EducationPlacesStore {
         id: created.id,
         name: created.name,
         city: created.city,
-        isActive: created.isActive,
+        status: created.status,
+        totalStudentCount: 0,
         activeStudentCount: 0,
         averageAge: 0,
       };
@@ -142,18 +143,30 @@ export class EducationPlacesStore {
     }
   }
 
-  /** מעדכן IsActive בשרת ובמצב המקומי. */
-  async setPlaceActive(id: number, isActive: boolean): Promise<void> {
+  /**
+   * מעדכן סטטוס דרך PATCH קיים: `true` — פעילה (או השהייה אם אין תלמידים);
+   * `false` — לא פעילה (מאפשר מחיקה כשאין תלמידים).
+   */
+  async setPlaceActive(id: number, wantActive: boolean): Promise<void> {
     this._saving.set(true);
     try {
-      const updated = await this.service.setActiveAsync(id, isActive);
+      const updated = await this.service.setActiveAsync(id, wantActive);
       this._state.update((s) => ({
         ...s,
-        data: s.data.map((p) => (p.id === id ? { ...p, isActive: updated.isActive } : p)),
+        data: s.data.map((p) => (p.id === id ? { ...p, status: updated.status } : p)),
       }));
-      this.toast.success(
-        isActive ? 'הפנימייה סומנה כפעילה.' : 'הפנימייה סומנה כלא פעילה.',
-      );
+
+      if (wantActive) {
+        this.toast.success(
+          updated.status === 'suspended'
+            ? 'הפנימייה במצב השהייה — אין תלמידים משויכים. ניתן לשבץ תלמידים; עם שיבוץ הסטטוס יעבור לפעילה.'
+            : 'הפנימייה סומנה כפעילה.',
+        );
+      } else {
+        this.toast.success(
+          'הפנימייה סומנה כלא פעילה — לאחר הסרת כל התלמידים ניתן למחוק מהמערכת.',
+        );
+      }
     } catch {
       /* interceptor */
     } finally {

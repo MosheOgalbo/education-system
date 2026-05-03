@@ -1,9 +1,41 @@
+/** סטטוס פנימייה — תואם JsonStringEnumConverter (camelCase) מה-API. */
+export type EducationPlaceStatus = 'active' | 'suspended' | 'inactive';
+
+export function educationPlaceStatusLabel(status: EducationPlaceStatus): string {
+  switch (status) {
+    case 'active':
+      return 'פעילה';
+    case 'suspended':
+      return 'בהשהייה';
+    case 'inactive':
+      return 'לא פעילה';
+    default:
+      return String(status);
+  }
+}
+
+/** מחלקת תא בטבלה לפי סטטוס. */
+export function educationPlaceStatusCellClass(status: EducationPlaceStatus): string {
+  if (status === 'active') return 'status--active';
+  if (status === 'suspended') return 'status--suspended';
+  return 'status--inactive';
+}
+
+/** מחלקת שורה בטבלה. */
+export function educationPlaceDataRowClass(status: EducationPlaceStatus): string {
+  if (status === 'inactive') return 'data-row--inactive';
+  if (status === 'suspended') return 'data-row--suspended';
+  return '';
+}
+
 /** ממשקי DTO לפנימיות ולסטטיסטיקה — תואמים ל-API. */
 export interface EducationPlaceStatsDto {
   id: number;
   name: string;
   city: string;
-  isActive: boolean;
+  status: EducationPlaceStatus;
+  /** כל הרשומות ב-Student לפנימייה (פעילים ולא פעילים). */
+  totalStudentCount: number;
   activeStudentCount: number;
   averageAge: number;
 }
@@ -13,7 +45,7 @@ export interface EducationPlaceDto {
   id: number;
   name: string;
   city: string;
-  isActive: boolean;
+  status: EducationPlaceStatus;
 }
 
 export interface CreateEducationPlaceDto {

@@ -1,11 +1,13 @@
 using EducationSystem.Application.DTOs;
+using EducationSystem.Application.Enums;
 using EducationSystem.Application.Exceptions;
 using EducationSystem.Application.Interfaces;
 
 namespace EducationSystem.Application.Services;
 
 /// <summary>
-/// שירות פנימיות: שליפה עם סטטיסטיקה, CRUD, וכלל מחיקה (פנימייה לא פעילה וללא תלמידים משויכים).
+/// שירות פנימיות: שליפה עם סטטיסטיקה, CRUD, עדכון סטטוס (פעילה / לא פעילה / השהייה אוטומטית),
+/// ומחיקה רק במצב «לא פעילה» וללא תלמידים משויכים.
 /// </summary>
 public sealed class EducationPlaceService(IEducationPlaceRepository repository)
     : IEducationPlaceService
@@ -39,7 +41,17 @@ public sealed class EducationPlaceService(IEducationPlaceRepository repository)
     /// <inheritdoc />
     public async Task<EducationPlaceDto> SetActiveAsync(int id, SetEducationPlaceActiveDto dto)
     {
-        var updated = await repository.SetActiveAsync(id, dto.IsActive);
+        if (!await repository.ExistsAsync(id))
+            throw new NotFoundException($"פנימייה עם מזהה {id} אינה קיימת.");
+
+        var count = await repository.CountStudentsForPlaceAsync(id);
+        var target = !dto.IsActive
+            ? EducationPlaceStatus.Inactive
+            : count == 0
+                ? EducationPlaceStatus.Suspended
+                : EducationPlaceStatus.Active;
+
+        var updated = await repository.SetStatusAsync(id, target);
         if (updated is null)
             throw new NotFoundException($"פנימייה עם מזהה {id} אינה קיימת.");
         return updated;
@@ -51,10 +63,11 @@ public sealed class EducationPlaceService(IEducationPlaceRepository repository)
         if (!await repository.ExistsAsync(id))
             throw new NotFoundException($"פנימייה עם מזהה {id} אינה קיימת.");
 
-        var isActive = await repository.GetIsActiveIfExistsAsync(id);
-        if (isActive == true)
+        var status = await repository.GetStatusIfExistsAsync(id);
+        if (status != EducationPlaceStatus.Inactive)
             throw new ValidationException(
-                "לא ניתן למחוק פנימייה פעילה. יש להשבית את הפנימייה (סטטוס «לא פעילה») ולאחר מכן לבצע מחיקה.");
+                "לא ניתן למחוק פנימייה שאינה במצב «לא פעילה». " +
+                "במצב פעילה או בהשהייה יש להעביר תחילה ל«לא פעילה» (PATCH), ורק אז ניתן למחוק.");
 
         if (await repository.CountStudentsForPlaceAsync(id) > 0)
             throw new ValidationException("לא ניתן למחוק פנימייה שיש לה תלמידים משויכים.");
