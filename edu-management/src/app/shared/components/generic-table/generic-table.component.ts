@@ -220,10 +220,6 @@ import { ColumnDef, TableAction, SortState } from './generic-table.types';
         opacity: 0.72;
       }
 
-      .mat-mdc-row.data-row--suspended {
-        background: rgba(245, 124, 0, 0.06);
-      }
-
       .mat-mdc-header-row {
         background: var(--gov-table-header-bg) !important;
       }

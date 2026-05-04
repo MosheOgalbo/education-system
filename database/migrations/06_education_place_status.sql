@@ -60,13 +60,13 @@ BEGIN
         ep.City,
         ep.[Status],
         (SELECT COUNT(1) FROM dbo.Student s2 WHERE s2.EducationPlaceId = ep.Id) AS TotalStudentCount,
-        COUNT(s.Id) AS ActiveStudentCount,
-        ISNULL(AVG(CAST(s.Age AS DECIMAL(5,2))), 0) AS AverageAge
+        (SELECT COUNT(1) FROM dbo.Student s2 WHERE s2.EducationPlaceId = ep.Id AND s2.IsActive = 1) AS ActiveStudentCount,
+        ISNULL((
+            SELECT AVG(CAST(s3.Age AS DECIMAL(5,2)))
+            FROM dbo.Student s3
+            WHERE s3.EducationPlaceId = ep.Id
+        ), 0) AS AverageAge
     FROM dbo.EducationPlace ep
-    LEFT JOIN dbo.Student s
-        ON  s.EducationPlaceId = ep.Id
-        AND s.IsActive = 1
-    GROUP BY ep.Id, ep.Name, ep.City, ep.[Status]
     ORDER BY ep.Name;
 END;
 GO

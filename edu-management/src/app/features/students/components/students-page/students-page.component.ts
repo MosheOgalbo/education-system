@@ -1,6 +1,6 @@
 /**
  * דף רשימת תלמידים למוסד שנבחר ב-route (`:id`). שם הפנימייה נטען בנפרד לכותרת.
- * טבלה עם תפריט פעולות (כמו בדף הפנימיות) לעריכה/מחיקה.
+ * טבלה עם תפריט פעולות (כמו בדף הפנימיות) לעריכה/העברה/מחיקה.
  */
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -12,7 +12,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { EducationPlacesService } from '../../../education-places/services/education-places.service';
 import { StudentsStore } from '../../store/students.store';
-import { StudentDto } from '../../../../core/models/student.model';
+import { StudentDto, UpdateStudentDto } from '../../../../core/models/student.model';
 import { ColumnDef, TableAction } from '../../../../shared/components/generic-table/generic-table.types';
 import { GenericTableComponent } from '../../../../shared/components/generic-table/generic-table.component';
 import { LoadingSkeletonComponent } from '../../../../shared/components/loading-skeleton/loading-skeleton.component';
@@ -23,11 +23,13 @@ import {
   StudentDialogData,
 } from '../student-form-dialog/student-form-dialog.component';
 import {
+  StudentTransferDialogComponent,
+  StudentTransferDialogData,
+} from '../student-transfer-dialog/student-transfer-dialog.component';
+import {
   ConfirmDialogComponent,
   ConfirmDialogData,
 } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
-import { ToastService } from '../../../../core/services/toast.service';
-
 @Component({
   selector: 'app-students-page',
   standalone: true,
@@ -50,7 +52,6 @@ export class StudentsPageComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
   private readonly placesService = inject(EducationPlacesService);
-  private readonly toast = inject(ToastService);
 
   protected readonly educationPlaceId = signal<number>(0);
   protected readonly placeName = signal<string | null>(null);
@@ -64,12 +65,12 @@ export class StudentsPageComponent implements OnInit {
       key: 'isActive',
       label: 'סטטוס',
       align: 'center',
-      render: (row) => (row.isActive ? 'פעיל' : 'לא פעיל'),
-      cellClass: (row) => (row.isActive ? 'status--active' : 'status--inactive'),
+      render: (row) => (row.isActive ? 'פעיל' : 'בהשהייה'),
+      cellClass: (row) => (row.isActive ? 'status--active' : 'status--suspended'),
     },
   ];
 
-  /** עריכה ומחיקה מתפריט פעולות. */
+  /** עריכה, העברה לפנימייה אחרת, מחיקה מהמערכת. */
   protected readonly actions: TableAction<StudentDto>[] = [
     {
       icon: 'edit',
@@ -78,14 +79,16 @@ export class StudentsPageComponent implements OnInit {
       handler: (row) => this.openEditDialog(row),
     },
     {
+      icon: 'swap_horiz',
+      label: 'מעבר לפנימייה אחרת',
+      color: 'primary',
+      handler: (row) => this.openTransferDialog(row),
+    },
+    {
       icon: 'delete',
-      label: 'מחיקה',
+      label: 'מחיקה מהמערכת',
       color: 'warn',
-      disabled: (row) => row.age > 19,
-      tooltipFn: (row) =>
-        row.age > 19
-          ? 'הסרה מהמערכת מותרת רק לתלמידים בגיל עד 19. ניתן לערוך את הרישום או לסמן כלא פעיל.'
-          : 'הסרת תלמיד מהמערכת (לאחר אישור)',
+      tooltipFn: () => 'מחיקה סופית מהמערכת (לאחר אישור)',
       handler: (row) => this.deleteStudent(row),
     },
   ];
@@ -94,7 +97,7 @@ export class StudentsPageComponent implements OnInit {
   protected readonly filterOptions = [
     { label: 'הכול', value: null as boolean | null },
     { label: 'פעילים', value: true },
-    { label: 'לא פעילים', value: false },
+    { label: 'בהשהייה', value: false },
   ];
 
   /** קורא מזהה פנימייה מה-route; אם לא תקין — חזרה לרשימת הפנימיות. */
@@ -153,15 +156,40 @@ export class StudentsPageComponent implements OnInit {
     });
   }
 
+  /** דיאלוג בחירת פנימייה להעברת תלמיד. */
+  private openTransferDialog(student: StudentDto): void {
+    const ref = this.dialog.open<StudentTransferDialogComponent, StudentTransferDialogData, number | undefined>(
+      StudentTransferDialogComponent,
+      {
+        width: '460px',
+        maxWidth: '95vw',
+        autoFocus: 'first-tabbable',
+        data: {
+          student,
+          currentEducationPlaceId: this.educationPlaceId(),
+        },
+      },
+    );
+    ref.afterClosed().subscribe((newPlaceId) => {
+      const placeId =
+        typeof newPlaceId === 'number' ? newPlaceId : Number(newPlaceId);
+      if (!Number.isFinite(placeId) || placeId <= 0) {
+        return;
+      }
+      const dto: UpdateStudentDto = {
+        id: student.id,
+        name: student.name,
+        identityNumber: student.identityNumber,
+        age: student.age,
+        educationPlaceId: placeId,
+        isActive: student.isActive,
+      };
+      void this.store.updateStudent(student.id, dto);
+    });
+  }
+
   /** מחיקה לאחר אישור בדיאלוג המערכת (לא window.confirm). */
   private deleteStudent(student: StudentDto): void {
-    if (student.age > 19) {
-      this.toast.info(
-        `לא ניתן להסיר את "${student.name}" מהמערכת — מותר רק לגיל עד 19. ניתן לעדכן פרטים או לסמן את הרישום כלא פעיל.`,
-      );
-      return;
-    }
-
     const ref = this.dialog.open<ConfirmDialogComponent, ConfirmDialogData, boolean>(
       ConfirmDialogComponent,
       {
@@ -170,7 +198,7 @@ export class StudentsPageComponent implements OnInit {
         autoFocus: 'first-tabbable',
         data: {
           title: 'הסרת תלמיד מהמערכת',
-          message: `להסיר את "${student.name}" מהמערכת? פנימייה שנותרת ללא תלמידים תסומן אוטומטית כלא פעילה.`,
+          message: `להסיר את "${student.name}" מהמערכת? פנימייה ללא תלמידים תעבור אוטומטית למצב השהייה (אם אינה «לא פעילה»).`,
           confirmLabel: 'הסרה',
           destructive: true,
         },

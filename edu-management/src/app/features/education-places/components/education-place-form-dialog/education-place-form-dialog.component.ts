@@ -8,6 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { CreateEducationPlaceDto } from '../../../../core/models/education-place.model';
+import { personOrPlaceNameValidator } from '../../../../core/validators/business-input.validators';
 
 @Component({
   selector: 'app-education-place-form-dialog',
@@ -31,8 +32,14 @@ import { CreateEducationPlaceDto } from '../../../../core/models/education-place
           @if (form.get('name')?.hasError('required') && form.get('name')?.touched) {
             <mat-error>שדה חובה</mat-error>
           }
-          @if (form.get('name')?.hasError('minlength') && form.get('name')?.touched) {
+          @if (form.get('name')?.hasError('minLength') && form.get('name')?.touched) {
             <mat-error>לפחות 2 תווים</mat-error>
+          }
+          @if (form.get('name')?.hasError('maxLength') && form.get('name')?.touched) {
+            <mat-error>עד 200 תווים</mat-error>
+          }
+          @if (form.get('name')?.hasError('invalidChars') && form.get('name')?.touched) {
+            <mat-error>מותרות אותיות בעברית ובאנגלית, רווחים, מקף, נקודה ואפוסטרוף בלבד</mat-error>
           }
         </mat-form-field>
 
@@ -42,15 +49,21 @@ import { CreateEducationPlaceDto } from '../../../../core/models/education-place
           @if (form.get('city')?.hasError('required') && form.get('city')?.touched) {
             <mat-error>שדה חובה</mat-error>
           }
-          @if (form.get('city')?.hasError('minlength') && form.get('city')?.touched) {
+          @if (form.get('city')?.hasError('minLength') && form.get('city')?.touched) {
             <mat-error>לפחות 2 תווים</mat-error>
+          }
+          @if (form.get('city')?.hasError('maxLength') && form.get('city')?.touched) {
+            <mat-error>עד 200 תווים</mat-error>
+          }
+          @if (form.get('city')?.hasError('invalidChars') && form.get('city')?.touched) {
+            <mat-error>מותרות אותיות בעברית ובאנגלית, רווחים, מקף, נקודה ואפוסטרוף בלבד</mat-error>
           }
         </mat-form-field>
       </div>
     </mat-dialog-content>
 
     <mat-dialog-actions align="end">
-      <button mat-button type="button" mat-dialog-close>ביטול</button>
+      <button mat-button type="button" (click)="dialogRef.close()">ביטול</button>
       <button
         mat-raised-button
         color="primary"
@@ -80,17 +93,21 @@ import { CreateEducationPlaceDto } from '../../../../core/models/education-place
   ],
 })
 export class EducationPlaceFormDialogComponent {
-  private readonly dialogRef = inject(MatDialogRef<EducationPlaceFormDialogComponent>);
+  protected readonly dialogRef = inject(MatDialogRef<EducationPlaceFormDialogComponent>);
 
   protected readonly form = new FormGroup({
-    name: new FormControl('', [Validators.required, Validators.minLength(2)]),
-    city: new FormControl('', [Validators.required, Validators.minLength(2)]),
+    name: new FormControl('', [Validators.required, personOrPlaceNameValidator()]),
+    city: new FormControl('', [Validators.required, personOrPlaceNameValidator()]),
   });
 
   /** סוגר את הדיאלוג עם DTO אם הטופס תקין. */
   protected submit(): void {
     if (this.form.invalid) return;
-    const dto: CreateEducationPlaceDto = this.form.getRawValue() as CreateEducationPlaceDto;
+    const raw = this.form.getRawValue() as CreateEducationPlaceDto;
+    const dto: CreateEducationPlaceDto = {
+      name: raw.name.trim(),
+      city: raw.city.trim(),
+    };
     this.dialogRef.close(dto);
   }
 }

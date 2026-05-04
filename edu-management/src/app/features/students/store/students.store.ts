@@ -91,16 +91,25 @@ export class StudentsStore {
     }
   }
 
-  /** מעדכן תלמיד ומחליף את הרשומה בזיכרון. */
+  /** מעדכן תלמיד; אם הועבר לפנימייה אחרת — מסיר מהרשימה הנוכחית. */
   async updateStudent(id: number, dto: UpdateStudentDto): Promise<void> {
     this.isSaving.set(true);
     try {
       const updated = await this.service.updateAsync(id, dto);
-      this._state.update((s) => ({
-        ...s,
-        data: s.data.map((item) => (item.id === id ? updated : item)),
-      }));
-      this.toast.success(`פרטי "${updated.name}" עודכנו.`);
+      const placeId = this._educationPlaceId();
+      if (placeId != null && updated.educationPlaceId !== placeId) {
+        this._state.update((s) => ({
+          ...s,
+          data: s.data.filter((item) => item.id !== id),
+        }));
+        this.toast.success(`"${updated.name}" הועבר/ה לפנימייה אחרת.`);
+      } else {
+        this._state.update((s) => ({
+          ...s,
+          data: s.data.map((item) => (item.id === id ? updated : item)),
+        }));
+        this.toast.success(`פרטי "${updated.name}" עודכנו.`);
+      }
     } catch {
       /* טוסט שגיאה מטופל ב-interceptor */
     } finally {

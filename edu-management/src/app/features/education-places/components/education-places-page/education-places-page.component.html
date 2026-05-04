@@ -88,7 +88,6 @@
         <mat-card
           class="place-card"
           [class.place-card--inactive]="place.status === 'inactive'"
-          [class.place-card--suspended]="place.status === 'suspended'"
           role="listitem"
         >
           <mat-card-header class="place-card__header">
@@ -130,10 +129,13 @@
           <mat-card-content class="place-card__body">
             <div class="place-card__stats">
               <span class="place-card__stat"
-                ><strong>{{ place.activeStudentCount }}</strong> תלמידים פעילים</span
+                ><strong>{{ place.activeStudentCount }}</strong> פעילים</span
               >
               <span class="place-card__stat"
-                >גיל ממוצע:
+                ><strong>{{ place.totalStudentCount }}</strong> סה״כ משויכים</span
+              >
+              <span class="place-card__stat"
+                >ממוצע גיל (כולל):
                 <strong>{{
                   place.averageAge > 0 ? (place.averageAge | number: '1.1-1') : '—'
                 }}</strong></span

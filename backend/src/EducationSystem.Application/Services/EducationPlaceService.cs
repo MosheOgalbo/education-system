@@ -2,6 +2,7 @@ using EducationSystem.Application.DTOs;
 using EducationSystem.Application.Enums;
 using EducationSystem.Application.Exceptions;
 using EducationSystem.Application.Interfaces;
+using EducationSystem.Application.Validation;
 
 namespace EducationSystem.Application.Services;
 
@@ -27,11 +28,17 @@ public sealed class EducationPlaceService(IEducationPlaceRepository repository)
 
     /// <inheritdoc />
     public Task<EducationPlaceDto> CreateAsync(CreateEducationPlaceDto dto)
-        => repository.InsertAsync(dto);
+    {
+        BusinessInputValidators.ValidateEducationPlaceName(dto.Name);
+        BusinessInputValidators.ValidateEducationPlaceCity(dto.City);
+        return repository.InsertAsync(dto);
+    }
 
     /// <inheritdoc />
     public async Task<EducationPlaceDto> UpdateAsync(int id, UpdateEducationPlaceDto dto)
     {
+        BusinessInputValidators.ValidateEducationPlaceName(dto.Name);
+        BusinessInputValidators.ValidateEducationPlaceCity(dto.City);
         var updated = await repository.UpdateAsync(id, dto);
         if (updated is null)
             throw new NotFoundException($"פנימייה עם מזהה {id} אינה קיימת.");
@@ -45,6 +52,11 @@ public sealed class EducationPlaceService(IEducationPlaceRepository repository)
             throw new NotFoundException($"פנימייה עם מזהה {id} אינה קיימת.");
 
         var count = await repository.CountStudentsForPlaceAsync(id);
+        if (!dto.IsActive && count > 0)
+            throw new ValidationException(
+                "לא ניתן להעביר פנימייה למצב «לא פעילה» כל עוד קיימים תלמידים משויכים לה. " +
+                "יש להעביר או להסיר את התלמידים תחילה.");
+
         var target = !dto.IsActive
             ? EducationPlaceStatus.Inactive
             : count == 0

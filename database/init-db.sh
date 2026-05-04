@@ -30,5 +30,7 @@ echo "Applying seed data (idempotent)..."
 
 echo "Applying additive migrations (idempotent)..."
 "${SQLCMD}" -S "${SERVER}" -U "${USER}" -P "${PASSWORD}" -C -i "/migrations/05_education_place_is_active.sql"
+"${SQLCMD}" -S "${SERVER}" -U "${USER}" -P "${PASSWORD}" -C -i "/migrations/06_education_place_status.sql"
+"${SQLCMD}" -S "${SERVER}" -U "${USER}" -P "${PASSWORD}" -C -i "/migrations/07_place_stats_include_inactive_students.sql"
 
 echo "Database initialization completed."

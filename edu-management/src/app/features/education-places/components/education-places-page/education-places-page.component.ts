@@ -38,6 +38,7 @@ import {
   ConfirmDialogComponent,
   ConfirmDialogData,
 } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
+import { ToastService } from '../../../../core/services/toast.service';
 
 @Component({
   selector: 'app-education-places-page',
@@ -64,6 +65,7 @@ export class EducationPlacesPageComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
   private readonly breakpoint = inject(BreakpointObserver);
+  private readonly toast = inject(ToastService);
 
   /** מתחת ל-768px — תצוגת כרטיסיות במקום טבלה. */
   protected readonly isCompactLayout = toSignal(
@@ -91,8 +93,15 @@ export class EducationPlacesPageComponent implements OnInit {
       render: (row) => `${row.activeStudentCount}`,
     },
     {
+      key: 'totalStudentCount',
+      label: 'סה״כ משויכים',
+      sortable: true,
+      align: 'center',
+      render: (row) => `${row.totalStudentCount}`,
+    },
+    {
       key: 'averageAge',
-      label: 'גיל ממוצע',
+      label: 'ממוצע גיל (כולל)',
       sortable: true,
       align: 'center',
       render: (row) => (row.averageAge > 0 ? row.averageAge.toFixed(1) : '—'),
@@ -157,7 +166,14 @@ export class EducationPlacesPageComponent implements OnInit {
 
   /** מעבר לפעילה (או השהייה) / ללא פעילה — לפי סטטוס נוכחי. */
   protected togglePlaceActive(row: EducationPlaceStatsDto): void {
-    void this.store.setPlaceActive(row.id, row.status === 'inactive');
+    const wantActive = row.status === 'inactive';
+    if (!wantActive && row.totalStudentCount > 0) {
+      this.toast.error(
+        'לא ניתן להעביר פנימייה למצב «לא פעילה» כל עוד קיימים תלמידים משויכים לה. יש להעביר או להסיר את התלמידים תחילה.',
+      );
+      return;
+    }
+    void this.store.setPlaceActive(row.id, wantActive);
   }
 
   /** אייקון בתפריט מובייל לפי סטטוס. */

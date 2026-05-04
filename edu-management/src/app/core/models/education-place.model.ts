@@ -21,10 +21,9 @@ export function educationPlaceStatusCellClass(status: EducationPlaceStatus): str
   return 'status--inactive';
 }
 
-/** מחלקת שורה בטבלה. */
+/** מחלקת שורה בטבלה — רק «לא פעילה» מעומעמת; בהשהייה הצהוב רק בעמודת הסטטוס. */
 export function educationPlaceDataRowClass(status: EducationPlaceStatus): string {
   if (status === 'inactive') return 'data-row--inactive';
-  if (status === 'suspended') return 'data-row--suspended';
   return '';
 }
 

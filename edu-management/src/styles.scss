@@ -42,6 +42,9 @@ body {
 }
 
 .status--suspended {
-  color: #e65100;
-  font-weight: 600;
+  color: #f57f17;
+  font-weight: 700;
+  background: rgba(255, 213, 79, 0.35);
+  padding: 2px 8px;
+  border-radius: 6px;
 }

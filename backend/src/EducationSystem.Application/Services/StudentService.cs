@@ -2,22 +2,21 @@ using EducationSystem.Application.DTOs;
 using EducationSystem.Application.Enums;
 using EducationSystem.Application.Exceptions;
 using EducationSystem.Application.Interfaces;
+using EducationSystem.Application.Validation;
 
 namespace EducationSystem.Application.Services;
 
 /// <summary>
-/// שירות תלמידים: ולידציה עסקית לפני כתיבה למסד (גיל, פנימייה פעילה/בהשהייה, ייחודיות ת״ז),
-/// כללי הסרה (גיל להסרה מהמערכת), וסנכרון סטטוס פנימייה (השהייה כשאין תלמידים, חזרה לפעילה כשיש).
+/// שירות תלמידים: ולידציה עסקית לפני כתיבה למסד (גיל, ת״ז, שם, פנימייה פעילה/בהשהייה, ייחודיות ת״ז),
+/// וסנכרון סטטוס פנימייה (השהייה כשאין תלמידים, חזרה לפעילה כשיש).
 /// </summary>
 public sealed class StudentService(
     IStudentRepository         studentRepository,
     IEducationPlaceRepository  educationPlaceRepository) : IStudentService
 {
     private const int MinAge = 5;
-    private const int MaxAge = 25;
-
-    /// <summary>גיל מקסימלי להסרת תלמיד מהמערכת (מחיקה) — כלל עסקי.</summary>
-    private const int MaxAgeEligibleForPermanentRemoval = 19;
+    /// <summary>גיל מקסימלי לשיבוץ/עדכון תלמיד בפנימייה (רק כשמשנים גיל).</summary>
+    private const int MaxAge = 19;
 
     /// <inheritdoc />
     public Task<IEnumerable<StudentDto>> GetAllAsync(int? educationPlaceId)
@@ -35,12 +34,13 @@ public sealed class StudentService(
     /// <inheritdoc />
     public async Task<StudentDto> CreateAsync(CreateStudentDto dto)
     {
-        ValidateCommonStudentFields(dto.Name, dto.IdentityNumber, dto.EducationPlaceId);
+        var idNorm = NormalizeAndValidateStudentInput(dto.Name, dto.IdentityNumber, dto.EducationPlaceId);
         ValidateAge(dto.Age);
         await EnsurePlaceAcceptsEnrollmentAsync(dto.EducationPlaceId);
-        await EnsureIdentityUnique(dto.IdentityNumber, excludeId: null);
+        await EnsureIdentityUnique(idNorm, excludeId: null);
 
-        var created = await studentRepository.InsertAsync(dto);
+        var toInsert = dto with { IdentityNumber = idNorm };
+        var created = await studentRepository.InsertAsync(toInsert);
         await SyncEducationPlaceStatusAfterStudentChangeAsync(dto.EducationPlaceId);
         return created;
     }
@@ -52,12 +52,23 @@ public sealed class StudentService(
         if (existing is null)
             throw new NotFoundException($"תלמיד עם מזהה {id} אינו קיים.");
 
-        ValidateCommonStudentFields(dto.Name, dto.IdentityNumber, dto.EducationPlaceId);
-        ValidateAge(dto.Age);
-        await EnsurePlaceAcceptsEnrollmentAsync(dto.EducationPlaceId);
-        await EnsureIdentityUnique(dto.IdentityNumber, excludeId: id);
+        var nameTrim = (dto.Name ?? string.Empty).Trim();
+        if (!string.Equals(nameTrim, existing.Name.Trim(), StringComparison.Ordinal))
+            BusinessInputValidators.ValidateStudentName(dto.Name ?? string.Empty);
 
-        var updated = await studentRepository.UpdateAsync(id, dto);
+        if (dto.Age != existing.Age)
+            ValidateAge(dto.Age);
+
+        if (dto.EducationPlaceId <= 0)
+            throw new ValidationException("מזהה פנימייה חייב להיות ערך חיובי תקף.");
+
+        var idNorm = ResolveIdentityNumberForUpdate(dto.IdentityNumber, existing.IdentityNumber);
+
+        await EnsurePlaceAcceptsEnrollmentAsync(dto.EducationPlaceId);
+        await EnsureIdentityUnique(idNorm, excludeId: id);
+
+        var toUpdate = dto with { Name = nameTrim, IdentityNumber = idNorm };
+        var updated = await studentRepository.UpdateAsync(id, toUpdate);
         if (updated is null)
             throw new NotFoundException($"תלמיד עם מזהה {id} אינו קיים.");
 
@@ -74,8 +85,6 @@ public sealed class StudentService(
         if (student is null)
             throw new NotFoundException($"תלמיד עם מזהה {id} אינו קיים.");
 
-        ValidateEligibleForPermanentRemoval(student);
-
         if (!await studentRepository.DeleteAsync(id))
             throw new NotFoundException($"תלמיד עם מזהה {id} אינו קיים.");
 
@@ -89,15 +98,36 @@ public sealed class StudentService(
         if (dto.Id is > 0)
             prior = await studentRepository.GetByIdAsync(dto.Id.Value);
 
-        ValidateCommonStudentFields(dto.Name, dto.IdentityNumber, dto.EducationPlaceId);
-        ValidateAge(dto.Age);
+        string idNorm;
+        if (prior is null)
+        {
+            idNorm = NormalizeAndValidateStudentInput(
+                dto.Name ?? string.Empty,
+                dto.IdentityNumber,
+                dto.EducationPlaceId);
+            ValidateAge(dto.Age);
+        }
+        else
+        {
+            var nameTrim = (dto.Name ?? string.Empty).Trim();
+            if (!string.Equals(nameTrim, prior.Name.Trim(), StringComparison.Ordinal))
+                BusinessInputValidators.ValidateStudentName(dto.Name ?? string.Empty);
+            if (dto.Age != prior.Age)
+                ValidateAge(dto.Age);
+            if (dto.EducationPlaceId <= 0)
+                throw new ValidationException("מזהה פנימייה חייב להיות ערך חיובי תקף.");
+            idNorm = ResolveIdentityNumberForUpdate(dto.IdentityNumber, prior.IdentityNumber);
+        }
+
         await EnsurePlaceAcceptsEnrollmentAsync(dto.EducationPlaceId);
-        await EnsureIdentityUnique(dto.IdentityNumber, dto.Id);
+        await EnsureIdentityUnique(idNorm, dto.Id);
 
         if (dto.Id is > 0 && prior is null)
             throw new NotFoundException($"תלמיד עם מזהה {dto.Id} אינו קיים.");
 
-        var result = await studentRepository.UpsertAsync(dto);
+        var nameForRow = (dto.Name ?? string.Empty).Trim();
+        var toUpsert = dto with { IdentityNumber = idNorm, Name = nameForRow };
+        var result = await studentRepository.UpsertAsync(toUpsert);
 
         await SyncEducationPlaceStatusAfterStudentChangeAsync(
             prior?.EducationPlaceId ?? result.EducationPlaceId,
@@ -106,35 +136,42 @@ public sealed class StudentService(
         return result;
     }
 
-    private static void ValidateEligibleForPermanentRemoval(StudentDto student)
-    {
-        if (student.Age > MaxAgeEligibleForPermanentRemoval)
-            throw new ValidationException(
-                $"לא ניתן להסיר תלמיד מהמערכת שגילו מעל {MaxAgeEligibleForPermanentRemoval}. " +
-                "ניתן לעדכן פרטים או להפוך את הרישום ללא פעיל.");
-    }
-
-    private static void ValidateCommonStudentFields(
+    /// <summary>
+    /// יצירה: שם + ת״ז מלאים (כולל ספרת ביקורת).
+    /// </summary>
+    private static string NormalizeAndValidateStudentInput(
         string name,
         string identityNumber,
         int educationPlaceId)
     {
-        if (string.IsNullOrWhiteSpace(name))
-            throw new ValidationException("שם התלמיד הוא שדה חובה.");
-        if (name.Trim().Length > 200)
-            throw new ValidationException("שם התלמיד ארוך מדי.");
-
-        if (string.IsNullOrWhiteSpace(identityNumber))
-            throw new ValidationException("מספר זהות הוא שדה חובה.");
-        var idTrim = identityNumber.Trim();
-        if (idTrim.Length < 5 || idTrim.Length > 20)
-            throw new ValidationException("מספר הזהות אינו בתבנית חוקית.");
-
+        BusinessInputValidators.ValidateStudentName(name);
         if (educationPlaceId <= 0)
             throw new ValidationException("מזהה פנימייה חייב להיות ערך חיובי תקף.");
+        return BusinessInputValidators.NormalizeIsraeliIdentityNumber(identityNumber);
     }
 
-    private void ValidateAge(int age)
+    /// <summary>
+    /// עדכון: אם הת״ז זהה למה שכבר במסד (אותן ספרות אחרי מילוי לאפסים), לא מריצים שוב בדיקת ספרת ביקורת —
+    /// כדי לא לחסום העברה/עריכה כשיש רשומות ישנות שלא עמדו בולידציה הנוכחית.
+    /// </summary>
+    private static string ResolveIdentityNumberForUpdate(string dtoIdentity, string existingIdentity)
+    {
+        static string Digits(string? s) => new string((s ?? string.Empty).Where(char.IsAsciiDigit).ToArray());
+
+        var d = Digits(dtoIdentity);
+        var e = Digits(existingIdentity);
+        if (d.Length is >= 5 and <= 9 && e.Length is >= 5 and <= 9)
+        {
+            var dPad = d.PadLeft(9, '0');
+            var ePad = e.PadLeft(9, '0');
+            if (dPad == ePad)
+                return dPad;
+        }
+
+        return BusinessInputValidators.NormalizeIsraeliIdentityNumber(dtoIdentity);
+    }
+
+    private static void ValidateAge(int age)
     {
         if (age < MinAge || age > MaxAge)
             throw new ValidationException($"גיל חייב להיות בין {MinAge} ל-{MaxAge}.");
