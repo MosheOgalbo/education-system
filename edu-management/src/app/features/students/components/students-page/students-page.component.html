@@ -35,18 +35,6 @@
     </button>
   </header>
 
-  <mat-chip-listbox
-    class="filter-chips gov-surface"
-    (change)="store.setActiveFilter($event.value)"
-    [value]="null"
-    hideSingleSelectionIndicator
-    aria-label="סינון לפי סטטוס"
-  >
-    @for (opt of filterOptions; track opt.label) {
-      <mat-chip-option [value]="opt.value">{{ opt.label }}</mat-chip-option>
-    }
-  </mat-chip-listbox>
-
   @if (store.isLoading()) {
     <app-loading-skeleton [rows]="5" />
   } @else if (store.isError()) {
@@ -65,6 +53,8 @@
       [loading]="store.saving()"
       [useActionsMenu]="true"
       [rowClickable]="false"
+      [showFilterButton]="true"
+      (filterClick)="openStudentsFilterDialog()"
       trackByKey="id"
     />
   }

@@ -36,7 +36,22 @@ import { ColumnDef, TableAction, SortState } from './generic-table.types';
     MatMenuModule,
   ],
   template: `
-    <div class="table-wrapper mat-elevation-z2 scroll-x">
+    <div class="table-outer mat-elevation-z2">
+      @if (showFilterButton()) {
+        <div class="table-toolbar">
+          <button
+            mat-icon-button
+            type="button"
+            class="table-toolbar__filter"
+            matTooltip="סינון"
+            aria-label="פתיחת סינון"
+            (click)="filterClick.emit()"
+          >
+            <mat-icon>filter_list</mat-icon>
+          </button>
+        </div>
+      }
+      <div class="table-wrapper scroll-x">
       <!-- min-width + overflow-x: במסכים צרים הטבלה נגללת אופקית במקום למעוך עמודות -->
       <table
         mat-table
@@ -144,16 +159,36 @@ import { ColumnDef, TableAction, SortState } from './generic-table.types';
       <div class="table-footer">
         <span class="row-count">{{ data().length }} רשומות</span>
       </div>
+      </div>
     </div>
   `,
   styles: [
     `
-      .table-wrapper {
+      .table-outer {
         border-radius: 10px;
         overflow: hidden;
         background: var(--gov-card);
         border: 1px solid rgba(0, 61, 122, 0.12);
         box-shadow: 0 1px 4px rgba(0, 61, 122, 0.07);
+        max-width: 100%;
+      }
+
+      .table-toolbar {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        padding: 4px 8px 4px 12px;
+        border-bottom: 1px solid rgba(0, 61, 122, 0.12);
+        background: #f5f9fd;
+      }
+
+      .table-toolbar__filter {
+        color: var(--gov-header);
+      }
+
+      .table-wrapper {
+        overflow: hidden;
+        background: var(--gov-card);
         max-width: 100%;
       }
 
@@ -280,7 +315,7 @@ import { ColumnDef, TableAction, SortState } from './generic-table.types';
       }
 
       @media (max-width: 768px) {
-        .table-wrapper.scroll-x {
+        .table-outer {
           border-radius: 8px;
         }
       }
@@ -293,6 +328,10 @@ export class GenericTableComponent<T extends object> {
   readonly actions = input<TableAction<T>[]>([]);
   readonly loading = input(false);
   readonly trackByKey = input<string>('id');
+  /** כפתור סינון מעל הטבלה — הדף פותח חלונית ומחיל מסנן בלחיצה «סינון». */
+  readonly showFilterButton = input(false);
+  readonly filterClick = output<void>();
+
   /** תפריט «פעולות» במקום כפתורי אייקון לכל פעולה */
   readonly useActionsMenu = input(false);
   /** לחיצה על שורה (כבוי כשמשתמשים בתפריט פעולות בלבד) */

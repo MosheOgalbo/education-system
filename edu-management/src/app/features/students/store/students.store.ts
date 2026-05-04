@@ -23,6 +23,9 @@ export class StudentsStore {
   /** מניעת race בין טעינות מהירות. */
   private loadSeq = 0;
 
+  /** סינון תצוגה נוכחי: null = כולם, true/false = פעילים / בהשהייה בלבד. */
+  readonly activeFilter = this._filterActive.asReadonly();
+
   readonly state = this._state.asReadonly();
   readonly isLoading = computed(() => this._state().state === 'loading');
   readonly isError = computed(() => this._state().state === 'error');

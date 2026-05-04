@@ -13,7 +13,14 @@ import { EducationPlacesService } from '../services/education-places.service';
 import {
   CreateEducationPlaceDto,
   EducationPlaceStatsDto,
+  EducationPlaceStatus,
+  educationPlaceStatusLabel,
 } from '../../../core/models/education-place.model';
+import {
+  EducationPlacesFilterDimension,
+  EducationPlacesFilterTabDescriptor,
+  EducationPlacesStructuredFilters,
+} from '../models/education-places-filter.model';
 import { AsyncState, ApiError, initialAsyncState } from '../../../core/models/api-error.model';
 import { ToastService } from '../../../core/services/toast.service';
 
@@ -27,6 +34,9 @@ export class EducationPlacesStore {
   );
   private readonly _searchQuery = signal('');
   private readonly _selectedCityFilter = signal<string | null>(null);
+  private readonly _statusFilter = signal<EducationPlaceStatus | null>(null);
+  private readonly _totalStudentsFilter = signal<number | null>(null);
+  private readonly _averageAgeFilter = signal<number | null>(null);
   private readonly _saving = signal(false);
   /** מונה טעינות — דוחה תשובות ישנות אם הגיעה טעינה חדשה. */
   private loadSeq = 0;
@@ -35,6 +45,9 @@ export class EducationPlacesStore {
   readonly saving = this._saving.asReadonly();
   readonly searchQuery = this._searchQuery.asReadonly();
   readonly selectedCityFilter = this._selectedCityFilter.asReadonly();
+  readonly statusFilter = this._statusFilter.asReadonly();
+  readonly totalStudentsFilter = this._totalStudentsFilter.asReadonly();
+  readonly averageAgeFilter = this._averageAgeFilter.asReadonly();
 
   readonly isLoading = computed(() => this._state().state === 'loading');
   readonly isError = computed(() => this._state().state === 'error');
@@ -48,10 +61,25 @@ export class EducationPlacesStore {
   readonly filteredItems = computed(() => {
     let items = this._state().data;
     const city = this._selectedCityFilter();
+    const status = this._statusFilter();
+    const ts = this._totalStudentsFilter();
+    const av = this._averageAgeFilter();
     const query = this._searchQuery().toLowerCase().trim();
 
     if (city) {
       items = items.filter((i) => i.city === city);
+    }
+
+    if (status) {
+      items = items.filter((i) => i.status === status);
+    }
+
+    if (ts != null) {
+      items = items.filter((i) => i.totalStudentCount === ts);
+    }
+
+    if (av != null) {
+      items = items.filter((i) => averageAgeMatchesFilter(i.averageAge, av));
     }
 
     if (query) {
@@ -63,6 +91,34 @@ export class EducationPlacesStore {
     }
 
     return items;
+  });
+
+  /** טאבים המשקפים סינון מובנה פעיל (עיר / סטטוס / טווחים). */
+  readonly filterTabs = computed((): EducationPlacesFilterTabDescriptor[] => {
+    const tabs: EducationPlacesFilterTabDescriptor[] = [];
+    const c = this._selectedCityFilter();
+    if (c) {
+      tabs.push({ id: 'city', label: c });
+    }
+    const st = this._statusFilter();
+    if (st) {
+      tabs.push({ id: 'status', label: educationPlaceStatusLabel(st) });
+    }
+    const tf = this._totalStudentsFilter();
+    if (tf != null) {
+      tabs.push({
+        id: 'totalStudents',
+        label: formatTotalStudentsTab(tf),
+      });
+    }
+    const af = this._averageAgeFilter();
+    if (af != null) {
+      tabs.push({
+        id: 'averageAge',
+        label: formatAverageAgeTab(af),
+      });
+    }
+    return tabs;
   });
 
   /** סכום תלמידים פעילים בכל הפנימיות (לפי הנתונים בזיכרון). */
@@ -99,20 +155,69 @@ export class EducationPlacesStore {
     }
   }
 
-  /** מילת חיפוש חופשית (שם או עיר). */
+  /**
+   * חיפוש חופשי — כשיש טקסט לא ריק (אחרי trim) מאפס את הסינון המובנה מהמודל.
+   */
   setSearch(query: string): void {
+    const trimmed = query.trim();
+    if (trimmed.length > 0) {
+      this.resetStructuredFilters();
+    }
     this._searchQuery.set(query);
   }
 
-  /** סינון לפי עיר נבחרת. */
+  /** סינון לפי עיר נבחרת (לשימוש ישן — מומלץ דרך החלונית). */
   setCityFilter(city: string | null): void {
     this._selectedCityFilter.set(city);
   }
 
-  /** מאפס חיפוש וסינון עיר. */
+  /** החלה מלאה מהחלונית «סינון». */
+  applyStructuredFilters(f: EducationPlacesStructuredFilters): void {
+    this._selectedCityFilter.set(f.city);
+    this._statusFilter.set(f.status);
+    this._totalStudentsFilter.set(f.totalStudents);
+    this._averageAgeFilter.set(f.averageAge);
+  }
+
+  /** מסיר מימד סינון בודד (מטאב). */
+  clearFilterDimension(dim: EducationPlacesFilterDimension): void {
+    switch (dim) {
+      case 'city':
+        this._selectedCityFilter.set(null);
+        break;
+      case 'status':
+        this._statusFilter.set(null);
+        break;
+      case 'totalStudents':
+        this._totalStudentsFilter.set(null);
+        break;
+      case 'averageAge':
+        this._averageAgeFilter.set(null);
+        break;
+    }
+  }
+
+  /** מאפס חיפוש וכל הסינונים. */
   clearFilters(): void {
     this._searchQuery.set('');
+    this.resetStructuredFilters();
+  }
+
+  /** סינון מובנה בלבד — לטעינת המודל כשמאפסים דרך חיפוש. */
+  readonly structuredFiltersSnapshot = computed(
+    (): EducationPlacesStructuredFilters => ({
+      city: this._selectedCityFilter(),
+      status: this._statusFilter(),
+      totalStudents: this._totalStudentsFilter(),
+      averageAge: this._averageAgeFilter(),
+    }),
+  );
+
+  private resetStructuredFilters(): void {
     this._selectedCityFilter.set(null);
+    this._statusFilter.set(null);
+    this._totalStudentsFilter.set(null);
+    this._averageAgeFilter.set(null);
   }
 
   /** יוצר פנימייה בשרת ומוסיף שורה מקומית עם סטטיסטיקה אפס. */
@@ -190,4 +295,19 @@ export class EducationPlacesStore {
       this._saving.set(false);
     }
   }
+}
+
+function formatTotalStudentsTab(n: number): string {
+  return `תלמידים: ${n}`;
+}
+
+function formatAverageAgeTab(n: number): string {
+  const s = Number.isInteger(n) ? String(n) : n.toFixed(1).replace(/\.0$/, '');
+  return `ממוצע גיל: ${s}`;
+}
+
+/** ממוצע 0 = אין נתונים — לא תואם למספר חיובי */
+function averageAgeMatchesFilter(placeAvg: number, filter: number): boolean {
+  if (filter > 0 && placeAvg <= 0) return false;
+  return Math.abs(placeAvg - filter) < 0.001;
 }

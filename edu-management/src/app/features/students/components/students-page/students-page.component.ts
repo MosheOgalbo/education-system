@@ -7,7 +7,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { EducationPlacesService } from '../../../education-places/services/education-places.service';
@@ -30,13 +29,16 @@ import {
   ConfirmDialogComponent,
   ConfirmDialogData,
 } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
+import {
+  StudentsFilterDialogComponent,
+  StudentsFilterDialogData,
+} from '../students-filter-dialog/students-filter-dialog.component';
 @Component({
   selector: 'app-students-page',
   standalone: true,
   imports: [
     MatButtonModule,
     MatIconModule,
-    MatChipsModule,
     MatTooltipModule,
     GenericTableComponent,
     LoadingSkeletonComponent,
@@ -91,13 +93,6 @@ export class StudentsPageComponent implements OnInit {
       tooltipFn: () => 'מחיקה סופית מהמערכת (לאחר אישור)',
       handler: (row) => this.deleteStudent(row),
     },
-  ];
-
-  /** אפשרויות צ'יפ לסינון פעיל/לא פעיל ב-store. */
-  protected readonly filterOptions = [
-    { label: 'הכול', value: null as boolean | null },
-    { label: 'פעילים', value: true },
-    { label: 'בהשהייה', value: false },
   ];
 
   /** קורא מזהה פנימייה מה-route; אם לא תקין — חזרה לרשימת הפנימיות. */
@@ -212,5 +207,24 @@ export class StudentsPageComponent implements OnInit {
   /** חזרה לרשימת הפנימיות. */
   protected goBack(): void {
     void this.router.navigate(['/education-places']);
+  }
+
+  /** חלונית סינון — «סינון» מחיל, «ביטול» סוגר בלי שינוי. */
+  protected openStudentsFilterDialog(): void {
+    const ref = this.dialog.open<
+      StudentsFilterDialogComponent,
+      StudentsFilterDialogData,
+      boolean | null | undefined
+    >(StudentsFilterDialogComponent, {
+      width: '400px',
+      maxWidth: '95vw',
+      autoFocus: 'first-tabbable',
+      data: { initialFilter: this.store.activeFilter() },
+    });
+    ref.afterClosed().subscribe((result) => {
+      if (result !== undefined) {
+        this.store.setActiveFilter(result);
+      }
+    });
   }
 }

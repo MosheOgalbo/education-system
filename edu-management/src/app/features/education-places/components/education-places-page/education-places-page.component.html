@@ -31,8 +31,19 @@
       [options]="store.availableCities()"
       [value]="store.searchQuery()"
       (valueChange)="onSearchChange($event)"
-      (optionSelected)="onCitySelect($event)"
     />
+
+    <button
+      mat-icon-button
+      type="button"
+      class="filter-bar__open-filter"
+      matTooltip="סינון מתקדם"
+      aria-label="פתיחת סינון מתקדם"
+      [disabled]="store.isLoading()"
+      (click)="openPlacesFilterDialog()"
+    >
+      <mat-icon>filter_list</mat-icon>
+    </button>
 
     @if (hasActiveFilters()) {
       <button
@@ -48,18 +59,21 @@
     }
   </div>
 
-  @if (!store.isLoading() && store.availableCities().length > 0) {
-    <mat-chip-listbox
-      class="city-chips gov-surface"
-      [value]="store.selectedCityFilter()"
-      (change)="onCitySelect($event.value)"
-      hideSingleSelectionIndicator
-      aria-label="סינון לפי עיר"
-    >
-      @for (city of store.availableCities(); track city) {
-        <mat-chip-option [value]="city">{{ city }}</mat-chip-option>
+  @if (store.filterTabs().length > 0) {
+    <nav mat-tab-nav-bar class="filter-tabs gov-surface" [tabPanel]="filterTabsPanel">
+      @for (tab of store.filterTabs(); track tab.id) {
+        <a
+          mat-tab-link
+          type="button"
+          href="#"
+          class="filter-tabs__link"
+          (click)="onFilterTabClick(tab.id, $event)"
+        >
+          {{ tab.label }}
+        </a>
       }
-    </mat-chip-listbox>
+    </nav>
+    <mat-tab-nav-panel #filterTabsPanel class="filter-tabs-panel" />
   }
 
   @if (store.isLoading()) {

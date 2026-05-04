@@ -11,7 +11,7 @@ import { map } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatChipsModule } from '@angular/material/chips';
+import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatCardModule } from '@angular/material/card';
 import { MatMenuModule } from '@angular/material/menu';
@@ -38,6 +38,14 @@ import {
   ConfirmDialogComponent,
   ConfirmDialogData,
 } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
+import {
+  EducationPlacesFilterDialogComponent,
+  EducationPlacesFilterDialogData,
+} from '../education-places-filter-dialog/education-places-filter-dialog.component';
+import {
+  EducationPlacesFilterDimension,
+  EducationPlacesStructuredFilters,
+} from '../../models/education-places-filter.model';
 import { ToastService } from '../../../../core/services/toast.service';
 
 @Component({
@@ -47,7 +55,7 @@ import { ToastService } from '../../../../core/services/toast.service';
     DecimalPipe,
     MatButtonModule,
     MatIconModule,
-    MatChipsModule,
+    MatTabsModule,
     MatTooltipModule,
     MatCardModule,
     MatMenuModule,
@@ -145,9 +153,10 @@ export class EducationPlacesPageComponent implements OnInit {
 
   protected readonly rowClassFn = (row: EducationPlaceStatsDto) => educationPlaceDataRowClass(row.status);
 
-  /** האם יש חיפוש או סינון עיר פעיל. */
+  /** חיפוש טקסט או סינון מהמודל (טאבים). */
   protected readonly hasActiveFilters = computed(
-    () => !!this.store.searchQuery() || !!this.store.selectedCityFilter(),
+    () =>
+      !!this.store.searchQuery().trim() || this.store.filterTabs().length > 0,
   );
 
   protected placeStatusLabel(row: EducationPlaceStatsDto): string {
@@ -213,9 +222,10 @@ export class EducationPlacesPageComponent implements OnInit {
     this.store.setSearch(query);
   }
 
-  /** סינון לפי עיר. */
-  protected onCitySelect(city: string | null): void {
-    this.store.setCityFilter(city);
+  /** לחיצה על טאב מסירה את מימד הסינון המתאים. */
+  protected onFilterTabClick(id: EducationPlacesFilterDimension, event: Event): void {
+    event.preventDefault();
+    this.store.clearFilterDimension(id);
   }
 
   /** איפוס חיפוש ועיר. */
@@ -231,6 +241,28 @@ export class EducationPlacesPageComponent implements OnInit {
     );
     ref.afterClosed().subscribe((result) => {
       if (result) void this.store.createPlace(result);
+    });
+  }
+
+  /** חלונית סינון — «סינון» מחיל מסננים מובנים; חיפוש נשאר בשדה הנפרד. */
+  protected openPlacesFilterDialog(): void {
+    const ref = this.dialog.open<
+      EducationPlacesFilterDialogComponent,
+      EducationPlacesFilterDialogData,
+      EducationPlacesStructuredFilters | undefined
+    >(EducationPlacesFilterDialogComponent, {
+      width: '440px',
+      maxWidth: '95vw',
+      autoFocus: 'first-tabbable',
+      data: {
+        cities: this.store.availableCities(),
+        initial: this.store.structuredFiltersSnapshot(),
+      },
+    });
+    ref.afterClosed().subscribe((result) => {
+      if (result) {
+        this.store.applyStructuredFilters(result);
+      }
     });
   }
 }
