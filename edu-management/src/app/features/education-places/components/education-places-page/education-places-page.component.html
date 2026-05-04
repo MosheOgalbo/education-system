@@ -1,8 +1,8 @@
 <div class="page-container">
-  <header class="page-header">
+  <header class="page-header" role="banner">
     <div class="page-header__titles">
       <h1 class="page-header__title">פנימיות חינוך</h1>
-      <p class="page-header__subtitle">
+      <p class="page-header__subtitle" aria-live="polite">
         @if (!store.isLoading() && !store.isError()) {
           {{ store.filteredItems().length }} מתוך {{ store.allItems().length }} פנימיות
           &nbsp;·&nbsp;
@@ -18,19 +18,21 @@
       class="page-header__cta"
       [disabled]="store.isLoading() || store.saving()"
       (click)="openCreateDialog()"
+      aria-label="הוספת פנימייה חדשה"
     >
-      <mat-icon>add</mat-icon>
+      <mat-icon aria-hidden="true">add</mat-icon>
       הוספת פנימייה
     </button>
   </header>
 
-  <div class="filter-bar gov-surface">
+  <div class="filter-bar gov-surface" role="search">
     <app-autocomplete-input
       class="filter-bar__search"
       label="חיפוש לפי שם פנימייה או עיר"
       [options]="store.availableCities()"
       [value]="store.searchQuery()"
       (valueChange)="onSearchChange($event)"
+      aria-label="חיפוש פנימיות"
     />
 
     <button
@@ -42,7 +44,7 @@
       [disabled]="store.isLoading()"
       (click)="openPlacesFilterDialog()"
     >
-      <mat-icon>filter_list</mat-icon>
+      <mat-icon aria-hidden="true">filter_list</mat-icon>
     </button>
 
     @if (hasActiveFilters()) {
@@ -52,21 +54,24 @@
         class="filter-bar__clear"
         (click)="onClearFilters()"
         matTooltip="ניקוי כל המסננים"
+        aria-label="ניקוי כל המסננים"
       >
-        <mat-icon>filter_alt_off</mat-icon>
+        <mat-icon aria-hidden="true">filter_alt_off</mat-icon>
         ניקוי מסננים
       </button>
     }
   </div>
 
   @if (store.filterTabs().length > 0) {
-    <nav mat-tab-nav-bar class="filter-tabs gov-surface" [tabPanel]="filterTabsPanel">
+    <nav mat-tab-nav-bar class="filter-tabs gov-surface" [tabPanel]="filterTabsPanel" role="navigation" aria-label="מסננים פעילים">
       @for (tab of store.filterTabs(); track tab.id) {
         <a
           mat-tab-link
           type="button"
           href="#"
           class="filter-tabs__link"
+          role="button"
+          [attr.aria-label]="'הסר סינון: ' + tab.label"
           (click)="onFilterTabClick(tab.id, $event)"
         >
           {{ tab.label }}
@@ -77,9 +82,9 @@
   }
 
   @if (store.isLoading()) {
-    <app-loading-skeleton [rows]="6" />
+    <app-loading-skeleton [rows]="6" role="status" aria-live="polite" aria-label="טוען נתונים" />
   } @else if (store.isError()) {
-    <app-error-state [apiError]="store.error()" (retry)="store.retry()" />
+    <app-error-state [apiError]="store.error()" (retry)="store.retry()" role="alert" />
   } @else if (store.filteredItems().length === 0 && store.allItems().length > 0) {
     <app-empty-state
       icon="search_off"
@@ -87,6 +92,7 @@
       description="נסו לשנות את החיפוש או לנקות את המסננים."
       actionLabel="ניקוי מסננים"
       (action)="onClearFilters()"
+      role="status"
     />
   } @else if (store.filteredItems().length === 0) {
     <app-empty-state
@@ -95,9 +101,10 @@
       description="הוסיפו פנימייה ראשונה כדי להתחיל."
       actionLabel="הוספת פנימייה"
       (action)="openCreateDialog()"
+      role="status"
     />
   } @else if (isCompactLayout()) {
-    <div class="places-cards" role="list">
+    <div class="places-cards" role="list" aria-label="רשימת פנימיות">
       @for (place of store.filteredItems(); track place.id) {
         <mat-card
           class="place-card"
@@ -116,17 +123,19 @@
               class="place-card__menu-btn"
               [matMenuTriggerFor]="mobileMenu"
               matTooltip="פעולות"
-              aria-label="פתיחת תפריט פעולות"
+              [attr.aria-label]="'פתיחת תפריט פעולות ל' + place.name"
+              aria-haspopup="menu"
+              [attr.aria-expanded]="false"
             >
-              <mat-icon>more_vert</mat-icon>
+              <mat-icon aria-hidden="true">more_vert</mat-icon>
             </button>
             <mat-menu #mobileMenu="matMenu" class="actions-mat-menu">
               <button mat-menu-item type="button" (click)="navigateToStudents(place)">
-                <mat-icon>school</mat-icon>
+                <mat-icon aria-hidden="true">school</mat-icon>
                 <span>ניהול פנימייה</span>
               </button>
               <button mat-menu-item type="button" (click)="togglePlaceActive(place)">
-                <mat-icon>{{ toggleIcon(place) }}</mat-icon>
+                <mat-icon aria-hidden="true">{{ toggleIcon(place) }}</mat-icon>
                 <span>{{ toggleLabel(place) }}</span>
               </button>
               <button
@@ -135,7 +144,7 @@
                 [disabled]="place.status !== 'inactive' || place.totalStudentCount > 0"
                 (click)="confirmDeletePlace(place)"
               >
-                <mat-icon class="warn-icon">delete</mat-icon>
+                <mat-icon class="warn-icon" aria-hidden="true">delete</mat-icon>
                 <span>מחיקת פנימייה</span>
               </button>
             </mat-menu>
@@ -176,6 +185,8 @@
       [rowClickable]="false"
       [rowClassFn]="rowClassFn"
       trackByKey="id"
+      role="region"
+      aria-label="טבלת פנימיות"
     />
   }
 </div>

@@ -2,12 +2,13 @@
  * דף ניהול פנימיות: טבלה/כרטיסיות (breakpoint 768px), חיפוש וסינון עיר, דיאלוג הוספה, פעולות שורה.
  * BreakpointObserver — במובייל כרטיסיות במקום טבלה. תפריט פעולות מפחית לחיצות שגויות; `labelFn` לטקסט דינמי לפי סטטוס (פעילה / השהייה / לא פעילה).
  */
-import { Component, OnInit, inject, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, DestroyRef, inject, computed } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -51,6 +52,7 @@ import { ToastService } from '../../../../core/services/toast.service';
 @Component({
   selector: 'app-education-places-page',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     DecimalPipe,
     MatButtonModule,
@@ -68,18 +70,27 @@ import { ToastService } from '../../../../core/services/toast.service';
   templateUrl: './education-places-page.component.html',
   styleUrl: './education-places-page.component.scss',
 })
-export class EducationPlacesPageComponent implements OnInit {
+export class EducationPlacesPageComponent {
   protected readonly store = inject(EducationPlacesStore);
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
   private readonly breakpoint = inject(BreakpointObserver);
   private readonly toast = inject(ToastService);
+  private readonly destroyRef = inject(DestroyRef);
 
   /** מתחת ל-768px — תצוגת כרטיסיות במקום טבלה. */
   protected readonly isCompactLayout = toSignal(
-    this.breakpoint.observe('(max-width: 768px)').pipe(map((r) => r.matches)),
+    this.breakpoint.observe('(max-width: 768px)').pipe(
+      map((r) => r.matches),
+      takeUntilDestroyed(),
+    ),
     { initialValue: false },
   );
+
+  constructor() {
+    // טוען רשימת פנימיות בעת בנייה (החלף OnInit)
+    this.store.load();
+  }
 
   /** עמודות הטבלה: שם, עיר, סטטוס, מספרים, גיל ממוצע. */
   protected readonly columns: ColumnDef<EducationPlaceStatsDto>[] = [
@@ -163,10 +174,6 @@ export class EducationPlacesPageComponent implements OnInit {
     return educationPlaceStatusLabel(row.status);
   }
 
-  /** טוען רשימת פנימיות מה-store. */
-  ngOnInit(): void {
-    this.store.load();
-  }
 
   /** ניווט לדף תלמידים של הפנימייה. */
   protected navigateToStudents(row: EducationPlaceStatsDto): void {
@@ -212,9 +219,11 @@ export class EducationPlacesPageComponent implements OnInit {
         },
       },
     );
-    ref.afterClosed().subscribe((confirmed) => {
-      if (confirmed) void this.store.deletePlace(row.id, row.name);
-    });
+    ref.afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((confirmed) => {
+        if (confirmed) void this.store.deletePlace(row.id, row.name);
+      });
   }
 
   /** עדכון מילת חיפוש ב-store. */
@@ -239,9 +248,11 @@ export class EducationPlacesPageComponent implements OnInit {
       EducationPlaceFormDialogComponent,
       { width: '440px', maxWidth: '95vw', autoFocus: 'first-tabbable' },
     );
-    ref.afterClosed().subscribe((result) => {
-      if (result) void this.store.createPlace(result);
-    });
+    ref.afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((result) => {
+        if (result) void this.store.createPlace(result);
+      });
   }
 
   /** חלונית סינון — «סינון» מחיל מסננים מובנים; חיפוש נשאר בשדה הנפרד. */
@@ -259,10 +270,12 @@ export class EducationPlacesPageComponent implements OnInit {
         initial: this.store.structuredFiltersSnapshot(),
       },
     });
-    ref.afterClosed().subscribe((result) => {
-      if (result) {
-        this.store.applyStructuredFilters(result);
-      }
-    });
+    ref.afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((result) => {
+        if (result) {
+          this.store.applyStructuredFilters(result);
+        }
+      });
   }
 }

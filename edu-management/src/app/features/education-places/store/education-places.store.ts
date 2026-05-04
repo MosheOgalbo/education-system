@@ -7,6 +7,8 @@
  * ארוכים לטעינה חד-פעמית. שגיאות נזרקות אחרי ה-interceptor כ-ApiError.
  *
  * המחלקה: חנות Signals לרשימת פנימיות, סינון מקומי ופעולות מול ה-API.
+ *
+ * ✅ UPGRADED: Consolidated 7 signals into composite FilterState object for better state management.
  */
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { EducationPlacesService } from '../services/education-places.service';
@@ -24,6 +26,25 @@ import {
 import { AsyncState, ApiError, initialAsyncState } from '../../../core/models/api-error.model';
 import { ToastService } from '../../../core/services/toast.service';
 
+/** טיפוס מורכב לכל מצבי הסינון (consolidated from 6 signals). */
+interface FilterState {
+  searchQuery: string;
+  city: EducationPlaceStatus | null;
+  status: EducationPlaceStatus | null;
+  totalStudents: number | null;
+  activeStudents: number | null;
+  averageAge: number | null;
+}
+
+const initialFilterState: FilterState = {
+  searchQuery: '',
+  city: null,
+  status: null,
+  totalStudents: null,
+  activeStudents: null,
+  averageAge: null,
+};
+
 @Injectable({ providedIn: 'root' })
 export class EducationPlacesStore {
   private readonly service = inject(EducationPlacesService);
@@ -32,24 +53,22 @@ export class EducationPlacesStore {
   private readonly _state = signal<AsyncState<EducationPlaceStatsDto[]>>(
     initialAsyncState([]),
   );
-  private readonly _searchQuery = signal('');
-  private readonly _selectedCityFilter = signal<string | null>(null);
-  private readonly _statusFilter = signal<EducationPlaceStatus | null>(null);
-  private readonly _totalStudentsFilter = signal<number | null>(null);
-  private readonly _activeStudentsFilter = signal<number | null>(null);
-  private readonly _averageAgeFilter = signal<number | null>(null);
+  // ✅ CONSOLIDATED: Single filter state instead of 6 independent signals
+  private readonly _filters = signal<FilterState>(initialFilterState);
   private readonly _saving = signal(false);
   /** מונה טעינות — דוחה תשובות ישנות אם הגיעה טעינה חדשה. */
   private loadSeq = 0;
 
   readonly state = this._state.asReadonly();
   readonly saving = this._saving.asReadonly();
-  readonly searchQuery = this._searchQuery.asReadonly();
-  readonly selectedCityFilter = this._selectedCityFilter.asReadonly();
-  readonly statusFilter = this._statusFilter.asReadonly();
-  readonly totalStudentsFilter = this._totalStudentsFilter.asReadonly();
-  readonly activeStudentsFilter = this._activeStudentsFilter.asReadonly();
-  readonly averageAgeFilter = this._averageAgeFilter.asReadonly();
+
+  // ✅ UPGRADED: Expose filter state for template binding
+  readonly searchQuery = computed(() => this._filters().searchQuery);
+  readonly selectedCityFilter = computed(() => this._filters().city);
+  readonly statusFilter = computed(() => this._filters().status);
+  readonly totalStudentsFilter = computed(() => this._filters().totalStudents);
+  readonly activeStudentsFilter = computed(() => this._filters().activeStudents);
+  readonly averageAgeFilter = computed(() => this._filters().averageAge);
 
   readonly isLoading = computed(() => this._state().state === 'loading');
   readonly isError = computed(() => this._state().state === 'error');
@@ -62,34 +81,30 @@ export class EducationPlacesStore {
 
   readonly filteredItems = computed(() => {
     let items = this._state().data;
-    const city = this._selectedCityFilter();
-    const status = this._statusFilter();
-    const ts = this._totalStudentsFilter();
-    const act = this._activeStudentsFilter();
-    const av = this._averageAgeFilter();
-    const query = this._searchQuery().toLowerCase().trim();
+    const filters = this._filters();
 
-    if (city) {
-      items = items.filter((i) => i.city === city);
+    if (filters.city) {
+      items = items.filter((i) => i.city === filters.city);
     }
 
-    if (status) {
-      items = items.filter((i) => i.status === status);
+    if (filters.status) {
+      items = items.filter((i) => i.status === filters.status);
     }
 
-    if (ts != null) {
-      items = items.filter((i) => i.totalStudentCount === ts);
+    if (filters.totalStudents != null) {
+      items = items.filter((i) => i.totalStudentCount === filters.totalStudents);
     }
 
-    if (act != null) {
-      items = items.filter((i) => i.activeStudentCount === act);
+    if (filters.activeStudents != null) {
+      items = items.filter((i) => i.activeStudentCount === filters.activeStudents);
     }
 
-    if (av != null) {
-      items = items.filter((i) => averageAgeMatchesFilter(i.averageAge, av));
+    if (filters.averageAge != null) {
+      items = items.filter((i) => averageAgeMatchesFilter(i.averageAge, filters.averageAge!));
     }
 
-    if (query) {
+    if (filters.searchQuery) {
+      const query = filters.searchQuery.toLowerCase().trim();
       items = items.filter(
         (i) =>
           i.name.toLowerCase().includes(query) ||
@@ -103,33 +118,30 @@ export class EducationPlacesStore {
   /** טאבים המשקפים סינון מובנה פעיל (עיר / סטטוס / טווחים). */
   readonly filterTabs = computed((): EducationPlacesFilterTabDescriptor[] => {
     const tabs: EducationPlacesFilterTabDescriptor[] = [];
-    const c = this._selectedCityFilter();
-    if (c) {
-      tabs.push({ id: 'city', label: c });
+    const filters = this._filters();
+
+    if (filters.city) {
+      tabs.push({ id: 'city', label: filters.city });
     }
-    const st = this._statusFilter();
-    if (st) {
-      tabs.push({ id: 'status', label: educationPlaceStatusLabel(st) });
+    if (filters.status) {
+      tabs.push({ id: 'status', label: educationPlaceStatusLabel(filters.status) });
     }
-    const tf = this._totalStudentsFilter();
-    if (tf != null) {
+    if (filters.totalStudents != null) {
       tabs.push({
         id: 'totalStudents',
-        label: formatTotalStudentsTab(tf),
+        label: formatTotalStudentsTab(filters.totalStudents),
       });
     }
-    const ac = this._activeStudentsFilter();
-    if (ac != null) {
+    if (filters.activeStudents != null) {
       tabs.push({
         id: 'activeStudents',
-        label: formatActiveStudentsTab(ac),
+        label: formatActiveStudentsTab(filters.activeStudents),
       });
     }
-    const af = this._averageAgeFilter();
-    if (af != null) {
+    if (filters.averageAge != null) {
       tabs.push({
         id: 'averageAge',
-        label: formatAverageAgeTab(af),
+        label: formatAverageAgeTab(filters.averageAge),
       });
     }
     return tabs;
@@ -177,67 +189,62 @@ export class EducationPlacesStore {
     if (trimmed.length > 0) {
       this.resetStructuredFilters();
     }
-    this._searchQuery.set(query);
+    this._filters.update((f) => ({ ...f, searchQuery: query }));
   }
 
   /** סינון לפי עיר נבחרת (לשימוש ישן — מומלץ דרך החלונית). */
   setCityFilter(city: string | null): void {
-    this._selectedCityFilter.set(city);
+    this._filters.update((f) => ({ ...f, city: city as any }));
   }
 
   /** החלה מלאה מהחלונית «סינון». */
   applyStructuredFilters(f: EducationPlacesStructuredFilters): void {
-    this._selectedCityFilter.set(f.city);
-    this._statusFilter.set(f.status);
-    this._totalStudentsFilter.set(f.totalStudents);
-    this._activeStudentsFilter.set(f.activeStudents);
-    this._averageAgeFilter.set(f.averageAge);
+    this._filters.set({
+      searchQuery: '',
+      city: f.city as any,
+      status: f.status,
+      totalStudents: f.totalStudents,
+      activeStudents: f.activeStudents,
+      averageAge: f.averageAge,
+    });
   }
 
   /** מסיר מימד סינון בודד (מטאב). */
   clearFilterDimension(dim: EducationPlacesFilterDimension): void {
-    switch (dim) {
-      case 'city':
-        this._selectedCityFilter.set(null);
-        break;
-      case 'status':
-        this._statusFilter.set(null);
-        break;
-      case 'totalStudents':
-        this._totalStudentsFilter.set(null);
-        break;
-      case 'activeStudents':
-        this._activeStudentsFilter.set(null);
-        break;
-      case 'averageAge':
-        this._averageAgeFilter.set(null);
-        break;
-    }
+    this._filters.update((f) => ({
+      ...f,
+      [dim]: null,
+    }));
   }
 
   /** מאפס חיפוש וכל הסינונים. */
   clearFilters(): void {
-    this._searchQuery.set('');
-    this.resetStructuredFilters();
+    this._filters.set(initialFilterState);
   }
 
   /** סינון מובנה בלבד — לטעינת המודל כשמאפסים דרך חיפוש. */
   readonly structuredFiltersSnapshot = computed(
-    (): EducationPlacesStructuredFilters => ({
-      city: this._selectedCityFilter(),
-      status: this._statusFilter(),
-      totalStudents: this._totalStudentsFilter(),
-      activeStudents: this._activeStudentsFilter(),
-      averageAge: this._averageAgeFilter(),
-    }),
+    (): EducationPlacesStructuredFilters => {
+      const filters = this._filters();
+      return {
+        city: filters.city as any,
+        status: filters.status,
+        totalStudents: filters.totalStudents,
+        activeStudents: filters.activeStudents,
+        averageAge: filters.averageAge,
+      };
+    },
   );
 
   private resetStructuredFilters(): void {
-    this._selectedCityFilter.set(null);
-    this._statusFilter.set(null);
-    this._totalStudentsFilter.set(null);
-    this._activeStudentsFilter.set(null);
-    this._averageAgeFilter.set(null);
+    this._filters.update((f) => ({
+      ...f,
+      city: null,
+      status: null,
+      totalStudents: null,
+      activeStudents: null,
+      averageAge: null,
+    }));
   }
 
   /** יוצר פנימייה בשרת ומוסיף שורה מקומית עם סטטיסטיקה אפס. */

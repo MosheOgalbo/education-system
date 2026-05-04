@@ -1,14 +1,20 @@
 /**
  * דיאלוג Material: טופס Reactive להוספת פנימייה (שם + עיר); סוגר עם DTO או בלי ערך.
+ * משתמש ב-typed forms ו-FormBuilder לטיוב טיפוס.
  */
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { CreateEducationPlaceDto } from '../../../../core/models/education-place.model';
 import { personOrPlaceNameValidator } from '../../../../core/validators/business-input.validators';
+
+interface CreatePlaceFormModel {
+  name: string | null;
+  city: string | null;
+}
 
 @Component({
   selector: 'app-education-place-form-dialog',
@@ -94,19 +100,20 @@ import { personOrPlaceNameValidator } from '../../../../core/validators/business
 })
 export class EducationPlaceFormDialogComponent {
   protected readonly dialogRef = inject(MatDialogRef<EducationPlaceFormDialogComponent>);
+  private readonly fb = inject(FormBuilder);
 
-  protected readonly form = new FormGroup({
-    name: new FormControl('', [Validators.required, personOrPlaceNameValidator()]),
-    city: new FormControl('', [Validators.required, personOrPlaceNameValidator()]),
+  protected readonly form: FormGroup<{ name: any; city: any }> = this.fb.group({
+    name: ['', [Validators.required, personOrPlaceNameValidator()]],
+    city: ['', [Validators.required, personOrPlaceNameValidator()]],
   });
 
   /** סוגר את הדיאלוג עם DTO אם הטופס תקין. */
   protected submit(): void {
     if (this.form.invalid) return;
-    const raw = this.form.getRawValue() as CreateEducationPlaceDto;
+    const raw = this.form.getRawValue() as CreatePlaceFormModel;
     const dto: CreateEducationPlaceDto = {
-      name: raw.name.trim(),
-      city: raw.city.trim(),
+      name: (raw.name ?? '').trim(),
+      city: (raw.city ?? '').trim(),
     };
     this.dialogRef.close(dto);
   }
