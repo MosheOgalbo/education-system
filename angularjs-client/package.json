@@ -1,0 +1,20 @@
+{
+  "name": "angularjs-education-client",
+  "version": "1.0.0",
+  "description": "AngularJS 1.x client for Education System API",
+  "main": "index.html",
+  "scripts": {
+    "start": "http-server -a localhost -p 4300 -c-1 --cors",
+    "dev": "http-server -a localhost -p 4300 -c-1 --cors -o"
+  },
+  "dependencies": {
+    "angular": "^1.8.3",
+    "angular-route": "^1.8.3"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  },
+  "keywords": ["angularjs", "education", "api"],
+  "author": "Education System Team",
+  "license": "MIT"
+}
