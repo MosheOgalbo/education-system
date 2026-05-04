@@ -8,6 +8,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatTabsModule } from '@angular/material/tabs';
 
 import { EducationPlacesService } from '../../../education-places/services/education-places.service';
 import { StudentsStore } from '../../store/students.store';
@@ -33,6 +34,10 @@ import {
   StudentsFilterDialogComponent,
   StudentsFilterDialogData,
 } from '../students-filter-dialog/students-filter-dialog.component';
+import {
+  StudentsFilterTabId,
+  StudentsListFilters,
+} from '../../models/students-list-filter.model';
 @Component({
   selector: 'app-students-page',
   standalone: true,
@@ -40,6 +45,7 @@ import {
     MatButtonModule,
     MatIconModule,
     MatTooltipModule,
+    MatTabsModule,
     GenericTableComponent,
     LoadingSkeletonComponent,
     EmptyStateComponent,
@@ -209,21 +215,32 @@ export class StudentsPageComponent implements OnInit {
     void this.router.navigate(['/education-places']);
   }
 
-  /** חלונית סינון — «סינון» מחיל, «ביטול» סוגר בלי שינוי. */
+  /** איפוס מסנני הרשימה (סטטוס, שם, גיל). */
+  protected clearStudentFilters(): void {
+    this.store.clearListFilters();
+  }
+
+  /** לחיצה על טאב מסירה את מימד הסינון המתאים. */
+  protected onStudentFilterTabClick(id: StudentsFilterTabId, event: Event): void {
+    event.preventDefault();
+    this.store.clearFilterTab(id);
+  }
+
+  /** חלונית סינון — סטטוס, שם, גיל — «סינון» מחיל, «ביטול» סוגר בלי שינוי. */
   protected openStudentsFilterDialog(): void {
     const ref = this.dialog.open<
       StudentsFilterDialogComponent,
       StudentsFilterDialogData,
-      boolean | null | undefined
+      StudentsListFilters | undefined
     >(StudentsFilterDialogComponent, {
-      width: '400px',
+      width: '440px',
       maxWidth: '95vw',
       autoFocus: 'first-tabbable',
-      data: { initialFilter: this.store.activeFilter() },
+      data: { initial: this.store.studentsFilterSnapshot() },
     });
     ref.afterClosed().subscribe((result) => {
       if (result !== undefined) {
-        this.store.setActiveFilter(result);
+        this.store.applyListFilters(result);
       }
     });
   }

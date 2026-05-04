@@ -47,3 +47,39 @@
   gap: 10px;
 }
 
+.gov-surface {
+  background: var(--gov-card);
+}
+
+.filter-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 8px 12px 8px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 61, 122, 0.12);
+  box-shadow: 0 1px 3px rgba(0, 61, 122, 0.06);
+}
+
+.student-filter-tabs {
+  flex: 1;
+  min-width: 0;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 61, 122, 0.1);
+}
+
+.student-filter-tabs__link {
+  cursor: pointer;
+}
+
+.filter-tabs-panel {
+  display: none;
+}
+
+.filter-strip__clear {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+

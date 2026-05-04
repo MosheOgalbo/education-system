@@ -1,5 +1,5 @@
 /**
- * חלונית סינון פנימיות: מספר יחיד לכמות תלמידים, מספר יחיד לממוצע גיל, סטטוס, עיר.
+ * חלונית סינון פנימיות: סה״כ משויכים, פעילים, ממוצע גיל, סטטוס, עיר.
  * «סינון» תמיד מחיל את הבחירה (גם כשהתוצאה ריקה — למשל מספר שלא קיים בנתונים).
  */
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
@@ -42,9 +42,32 @@ export interface EducationPlacesFilterDialogData {
             type="text"
             inputmode="numeric"
             autocomplete="off"
-            [ngModel]="draftTotalStudents"
-            (ngModelChange)="onTotalStudentsChange($event)"
+            spellcheck="false"
+            [value]="draftTotalStudents"
+            (input)="onTotalStudentsInput($event)"
+            (keydown)="onTotalStudentsKeydown($event)"
+            (paste)="onTotalStudentsPaste($event)"
             placeholder="למשל 12"
+          />
+          <mat-hint>התאמה מדויקת — רק ספרות</mat-hint>
+        </mat-form-field>
+      </section>
+
+      <section class="dlg-section" aria-labelledby="sec-active">
+        <h3 id="sec-active" class="dlg-section__title">כמות תלמידים פעילים</h3>
+        <mat-form-field appearance="outline" class="dlg-field dlg-field--full">
+          <mat-label>מספר תלמידים פעילים מדויק</mat-label>
+          <input
+            matInput
+            type="text"
+            inputmode="numeric"
+            autocomplete="off"
+            spellcheck="false"
+            [value]="draftActiveStudents"
+            (input)="onActiveStudentsInput($event)"
+            (keydown)="onActiveStudentsKeydown($event)"
+            (paste)="onActiveStudentsPaste($event)"
+            placeholder="למשל 8"
           />
           <mat-hint>התאמה מדויקת — רק ספרות</mat-hint>
         </mat-form-field>
@@ -59,8 +82,11 @@ export interface EducationPlacesFilterDialogData {
             type="text"
             inputmode="decimal"
             autocomplete="off"
-            [ngModel]="draftAverageAge"
-            (ngModelChange)="onAverageAgeChange($event)"
+            spellcheck="false"
+            [value]="draftAverageAge"
+            (input)="onAverageAgeInput($event)"
+            (keydown)="onAverageAgeKeydown($event)"
+            (paste)="onAverageAgePaste($event)"
             placeholder="למשל 10.5"
           />
           <mat-hint>מספר עשרוני — רק ספרות ונקודה אחת</mat-hint>
@@ -145,6 +171,7 @@ export class EducationPlacesFilterDialogComponent {
   protected readonly emptyStatus = '';
 
   protected draftTotalStudents = '';
+  protected draftActiveStudents = '';
   protected draftAverageAge = '';
   protected draftStatus: EducationPlaceStatus | '' = '';
   protected draftCity = '';
@@ -155,24 +182,108 @@ export class EducationPlacesFilterDialogComponent {
     this.draftStatus = i.status ?? '';
     this.draftTotalStudents =
       i.totalStudents != null && Number.isFinite(i.totalStudents) ? String(i.totalStudents) : '';
+    this.draftActiveStudents =
+      i.activeStudents != null && Number.isFinite(i.activeStudents)
+        ? String(i.activeStudents)
+        : '';
     this.draftAverageAge =
       i.averageAge != null && Number.isFinite(i.averageAge) ? String(i.averageAge) : '';
   }
 
-  /** רק ספרות — ללא טקסט או סימנים */
-  protected onTotalStudentsChange(raw: string): void {
-    this.draftTotalStudents = raw.replace(/\D/g, '');
+  /** רק ספרות — מסנן אחרי input/paste */
+  protected onTotalStudentsInput(e: Event): void {
+    const el = e.target as HTMLInputElement;
+    const next = digitsOnly(el.value);
+    this.commitTotalStudents(el, next);
   }
 
-  /** ספרות ונקודה עשרונית אחת בלבד */
-  protected onAverageAgeChange(raw: string): void {
-    let s = raw.replace(/[^\d.]/g, '');
-    const firstDot = s.indexOf('.');
-    if (firstDot !== -1) {
-      const rest = s.slice(firstDot + 1).replace(/\./g, '');
-      s = s.slice(0, firstDot + 1) + rest;
+  /** חוסם תווים לא־ספרתיים לפני שמופיעים בשדה */
+  protected onTotalStudentsKeydown(e: KeyboardEvent): void {
+    if (e.isComposing) return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (navigationKeys.has(e.key)) return;
+    if (e.key.length === 1 && digitKeys.test(e.key)) return;
+    e.preventDefault();
+  }
+
+  protected onTotalStudentsPaste(e: ClipboardEvent): void {
+    e.preventDefault();
+    const el = e.target as HTMLInputElement;
+    const chunk = digitsOnly(e.clipboardData?.getData('text') ?? '');
+    const merged = mergePaste(el.value, el.selectionStart, el.selectionEnd, chunk, digitsOnly);
+    this.commitTotalStudents(el, merged);
+  }
+
+  protected onActiveStudentsInput(e: Event): void {
+    const el = e.target as HTMLInputElement;
+    const next = digitsOnly(el.value);
+    this.commitActiveStudents(el, next);
+  }
+
+  protected onActiveStudentsKeydown(e: KeyboardEvent): void {
+    if (e.isComposing) return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (navigationKeys.has(e.key)) return;
+    if (e.key.length === 1 && digitKeys.test(e.key)) return;
+    e.preventDefault();
+  }
+
+  protected onActiveStudentsPaste(e: ClipboardEvent): void {
+    e.preventDefault();
+    const el = e.target as HTMLInputElement;
+    const chunk = digitsOnly(e.clipboardData?.getData('text') ?? '');
+    const merged = mergePaste(el.value, el.selectionStart, el.selectionEnd, chunk, digitsOnly);
+    this.commitActiveStudents(el, merged);
+  }
+
+  /** ספרות + נקודה עשרונית אחת */
+  protected onAverageAgeInput(e: Event): void {
+    const el = e.target as HTMLInputElement;
+    const next = decimalOneDot(el.value);
+    this.commitAverageAge(el, next);
+  }
+
+  protected onAverageAgeKeydown(e: KeyboardEvent): void {
+    if (e.isComposing) return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (navigationKeys.has(e.key)) return;
+    if (e.key.length === 1 && digitKeys.test(e.key)) return;
+    const isDecimalSep =
+      e.key === '.' || e.key === ',' || e.code === 'NumpadDecimal';
+    if (isDecimalSep) {
+      if (this.draftAverageAge.includes('.')) e.preventDefault();
+      return;
     }
-    this.draftAverageAge = s;
+    e.preventDefault();
+  }
+
+  protected onAverageAgePaste(e: ClipboardEvent): void {
+    e.preventDefault();
+    const el = e.target as HTMLInputElement;
+    const chunk = decimalOneDot(e.clipboardData?.getData('text') ?? '');
+    const merged = mergePaste(
+      el.value,
+      el.selectionStart,
+      el.selectionEnd,
+      chunk,
+      decimalOneDot,
+    );
+    this.commitAverageAge(el, merged);
+  }
+
+  private commitTotalStudents(el: HTMLInputElement, next: string): void {
+    this.draftTotalStudents = next;
+    if (el.value !== next) el.value = next;
+  }
+
+  private commitActiveStudents(el: HTMLInputElement, next: string): void {
+    this.draftActiveStudents = next;
+    if (el.value !== next) el.value = next;
+  }
+
+  private commitAverageAge(el: HTMLInputElement, next: string): void {
+    this.draftAverageAge = next;
+    if (el.value !== next) el.value = next;
   }
 
   protected onCancel(): void {
@@ -184,6 +295,7 @@ export class EducationPlacesFilterDialogComponent {
       city: this.draftCity === '' ? null : this.draftCity,
       status: this.draftStatus === '' ? null : (this.draftStatus as EducationPlaceStatus),
       totalStudents: parseOptionalPositiveInt(this.draftTotalStudents),
+      activeStudents: parseOptionalPositiveInt(this.draftActiveStudents),
       averageAge: parseOptionalNonNegativeFloat(this.draftAverageAge),
     };
     this.dialogRef.close(result);
@@ -204,4 +316,47 @@ function parseOptionalNonNegativeFloat(s: string): number | null {
   const n = parseFloat(t);
   if (!Number.isFinite(n) || n < 0) return null;
   return n;
+}
+
+const digitKeys = /^[0-9]$/;
+const navigationKeys = new Set([
+  'Backspace',
+  'Delete',
+  'Tab',
+  'Escape',
+  'Enter',
+  'ArrowLeft',
+  'ArrowRight',
+  'ArrowUp',
+  'ArrowDown',
+  'Home',
+  'End',
+]);
+
+function digitsOnly(s: string): string {
+  return s.replace(/\D/g, '');
+}
+
+/** ספרות ונקודה עשרונית אחת — פסיק מומר לנקודה */
+function decimalOneDot(s: string): string {
+  let out = s.replace(/,/g, '.').replace(/[^\d.]/g, '');
+  const firstDot = out.indexOf('.');
+  if (firstDot !== -1) {
+    const rest = out.slice(firstDot + 1).replace(/\./g, '');
+    out = out.slice(0, firstDot + 1) + rest;
+  }
+  return out;
+}
+
+function mergePaste(
+  value: string,
+  selStart: number | null,
+  selEnd: number | null,
+  pastedClean: string,
+  sanitize: (v: string) => string,
+): string {
+  const start = selStart ?? value.length;
+  const end = selEnd ?? value.length;
+  const merged = value.slice(0, start) + pastedClean + value.slice(end);
+  return sanitize(merged);
 }

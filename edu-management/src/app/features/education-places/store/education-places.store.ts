@@ -36,6 +36,7 @@ export class EducationPlacesStore {
   private readonly _selectedCityFilter = signal<string | null>(null);
   private readonly _statusFilter = signal<EducationPlaceStatus | null>(null);
   private readonly _totalStudentsFilter = signal<number | null>(null);
+  private readonly _activeStudentsFilter = signal<number | null>(null);
   private readonly _averageAgeFilter = signal<number | null>(null);
   private readonly _saving = signal(false);
   /** מונה טעינות — דוחה תשובות ישנות אם הגיעה טעינה חדשה. */
@@ -47,6 +48,7 @@ export class EducationPlacesStore {
   readonly selectedCityFilter = this._selectedCityFilter.asReadonly();
   readonly statusFilter = this._statusFilter.asReadonly();
   readonly totalStudentsFilter = this._totalStudentsFilter.asReadonly();
+  readonly activeStudentsFilter = this._activeStudentsFilter.asReadonly();
   readonly averageAgeFilter = this._averageAgeFilter.asReadonly();
 
   readonly isLoading = computed(() => this._state().state === 'loading');
@@ -63,6 +65,7 @@ export class EducationPlacesStore {
     const city = this._selectedCityFilter();
     const status = this._statusFilter();
     const ts = this._totalStudentsFilter();
+    const act = this._activeStudentsFilter();
     const av = this._averageAgeFilter();
     const query = this._searchQuery().toLowerCase().trim();
 
@@ -76,6 +79,10 @@ export class EducationPlacesStore {
 
     if (ts != null) {
       items = items.filter((i) => i.totalStudentCount === ts);
+    }
+
+    if (act != null) {
+      items = items.filter((i) => i.activeStudentCount === act);
     }
 
     if (av != null) {
@@ -109,6 +116,13 @@ export class EducationPlacesStore {
       tabs.push({
         id: 'totalStudents',
         label: formatTotalStudentsTab(tf),
+      });
+    }
+    const ac = this._activeStudentsFilter();
+    if (ac != null) {
+      tabs.push({
+        id: 'activeStudents',
+        label: formatActiveStudentsTab(ac),
       });
     }
     const af = this._averageAgeFilter();
@@ -176,6 +190,7 @@ export class EducationPlacesStore {
     this._selectedCityFilter.set(f.city);
     this._statusFilter.set(f.status);
     this._totalStudentsFilter.set(f.totalStudents);
+    this._activeStudentsFilter.set(f.activeStudents);
     this._averageAgeFilter.set(f.averageAge);
   }
 
@@ -190,6 +205,9 @@ export class EducationPlacesStore {
         break;
       case 'totalStudents':
         this._totalStudentsFilter.set(null);
+        break;
+      case 'activeStudents':
+        this._activeStudentsFilter.set(null);
         break;
       case 'averageAge':
         this._averageAgeFilter.set(null);
@@ -209,6 +227,7 @@ export class EducationPlacesStore {
       city: this._selectedCityFilter(),
       status: this._statusFilter(),
       totalStudents: this._totalStudentsFilter(),
+      activeStudents: this._activeStudentsFilter(),
       averageAge: this._averageAgeFilter(),
     }),
   );
@@ -217,6 +236,7 @@ export class EducationPlacesStore {
     this._selectedCityFilter.set(null);
     this._statusFilter.set(null);
     this._totalStudentsFilter.set(null);
+    this._activeStudentsFilter.set(null);
     this._averageAgeFilter.set(null);
   }
 
@@ -299,6 +319,10 @@ export class EducationPlacesStore {
 
 function formatTotalStudentsTab(n: number): string {
   return `תלמידים: ${n}`;
+}
+
+function formatActiveStudentsTab(n: number): string {
+  return `פעילים: ${n}`;
 }
 
 function formatAverageAgeTab(n: number): string {

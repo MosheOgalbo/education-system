@@ -8,6 +8,7 @@ export type EducationPlacesFilterDimension =
   | 'city'
   | 'status'
   | 'totalStudents'
+  | 'activeStudents'
   | 'averageAge';
 
 /** ערכים מהחלונית «סינון» (ללא חיפוש טקסט). */
@@ -16,6 +17,8 @@ export interface EducationPlacesStructuredFilters {
   status: EducationPlaceStatus | null;
   /** סה״כ משויכים — התאמה מדויקת; null = ללא סינון לפי שדה זה. */
   totalStudents: number | null;
+  /** תלמידים פעילים — התאמה מדויקת ל־activeStudentCount. */
+  activeStudents: number | null;
   /** ממוצע גיל — התאמה מספרית (עם סובלנות עשרונית קלה); null = ללא סינון. */
   averageAge: number | null;
 }

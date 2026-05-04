@@ -35,15 +35,61 @@
     </button>
   </header>
 
+  @if (!store.isLoading() && !store.isError() && store.hasActiveListFilters()) {
+    <div class="filter-strip gov-surface">
+      @if (store.filterTabs().length > 0) {
+        <nav
+          mat-tab-nav-bar
+          class="student-filter-tabs"
+          mat-align-tabs="start"
+          [tabPanel]="studentFilterTabPanel"
+        >
+          @for (tab of store.filterTabs(); track tab.id) {
+            <a
+              mat-tab-link
+              type="button"
+              href="#"
+              class="student-filter-tabs__link"
+              [matTooltip]="'הסרת מסנן: ' + tab.label"
+              (click)="onStudentFilterTabClick(tab.id, $event)"
+            >
+              {{ tab.label }}
+            </a>
+          }
+        </nav>
+        <mat-tab-nav-panel #studentFilterTabPanel class="filter-tabs-panel" />
+      }
+      <button
+        mat-stroked-button
+        color="primary"
+        type="button"
+        class="filter-strip__clear"
+        (click)="clearStudentFilters()"
+        matTooltip="איפוס כל המסננים"
+      >
+        <mat-icon>filter_alt_off</mat-icon>
+        ניקוי סינון
+      </button>
+    </div>
+  }
+
   @if (store.isLoading()) {
     <app-loading-skeleton [rows]="5" />
   } @else if (store.isError()) {
     <app-error-state [apiError]="store.error()" (retry)="store.retry()" />
-  } @else if (store.filteredStudents().length === 0) {
+  } @else if (store.filteredStudents().length === 0 && store.allStudentsCount() > 0) {
     <app-empty-state
       icon="person_off"
       title="לא נמצאו תלמידים"
       description="אין תלמידים התואמים למסנן הנוכחי."
+      actionLabel="ניקוי סינון"
+      (action)="clearStudentFilters()"
+    />
+  } @else if (store.filteredStudents().length === 0) {
+    <app-empty-state
+      icon="person_off"
+      title="אין תלמידים בפנימייה"
+      description="הוסיפו תלמיד או חזרו לרשימת הפנימיות."
     />
   } @else {
     <app-generic-table

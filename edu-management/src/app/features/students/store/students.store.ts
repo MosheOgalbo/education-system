@@ -2,13 +2,18 @@
  * מצב תלמידים לפי פנימייה. אותם עקרונות כמו EducationPlacesStore:
  * loadSeq למניעת race בין טעינות, async/await לשכבת הרשת, עדכון אופטימיסטי של הרשימה אחרי create/update/delete.
  *
- * סינון פעיל/לא פעיל נעשה ב-computed מקומי כדי לא לפגוע בנתונים שכבר נטענו מהשרת.
+ * סינון תצוגה מקומי: סטטוס, תת־מחרוזת בשם, גיל מדויק — בלי קריאת רשת נוספת.
  *
  * המחלקה: חנות Signals לתלמידים לפי פנימייה נבחרת.
  */
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { StudentsService } from '../services/students.service';
 import { StudentDto, CreateStudentDto, UpdateStudentDto } from '../../../core/models/student.model';
+import {
+  StudentsFilterTabDescriptor,
+  StudentsFilterTabId,
+  StudentsListFilters,
+} from '../models/students-list-filter.model';
 import { AsyncState, ApiError, initialAsyncState } from '../../../core/models/api-error.model';
 import { ToastService } from '../../../core/services/toast.service';
 
@@ -20,6 +25,8 @@ export class StudentsStore {
   private readonly _state = signal<AsyncState<StudentDto[]>>(initialAsyncState([]));
   private readonly _educationPlaceId = signal<number | null>(null);
   private readonly _filterActive = signal<boolean | null>(null);
+  private readonly _nameQuery = signal('');
+  private readonly _ageFilter = signal<number | null>(null);
   /** מניעת race בין טעינות מהירות. */
   private loadSeq = 0;
 
@@ -32,10 +39,59 @@ export class StudentsStore {
   readonly error = computed(() => this._state().error);
 
   readonly filteredStudents = computed(() => {
-    const filter = this._filterActive();
-    const all = this._state().data;
-    if (filter === null) return all;
-    return all.filter((s) => s.isActive === filter);
+    let list = this._state().data;
+    const status = this._filterActive();
+    if (status !== null) {
+      list = list.filter((s) => s.isActive === status);
+    }
+    const q = this._nameQuery().trim().toLowerCase();
+    if (q) {
+      list = list.filter((s) => s.name.toLowerCase().includes(q));
+    }
+    const age = this._ageFilter();
+    if (age != null) {
+      list = list.filter((s) => s.age === age);
+    }
+    return list;
+  });
+
+  /** מצב סינון לטעינת החלונית. */
+  readonly studentsFilterSnapshot = computed(
+    (): StudentsListFilters => ({
+      status: this._filterActive(),
+      nameQuery: this._nameQuery(),
+      age: this._ageFilter(),
+    }),
+  );
+
+  /** תלמידים בפנימייה לפני סינון תצוגה. */
+  readonly allStudentsCount = computed(() => this._state().data.length);
+
+  /** האם מוחלים סטטוס / שם / גיל בסינון. */
+  readonly hasActiveListFilters = computed(() => {
+    if (this._filterActive() !== null) return true;
+    if (this._nameQuery().trim().length > 0) return true;
+    return this._ageFilter() != null;
+  });
+
+  /** טאבים המציגים את המסננים הפעילים (לחיצה בדף מסירה מסנן בודד). */
+  readonly filterTabs = computed((): StudentsFilterTabDescriptor[] => {
+    const tabs: StudentsFilterTabDescriptor[] = [];
+    const st = this._filterActive();
+    if (st === true) {
+      tabs.push({ id: 'status', label: 'פעילים בלבד' });
+    } else if (st === false) {
+      tabs.push({ id: 'status', label: 'בהשהייה בלבד' });
+    }
+    const nq = this._nameQuery().trim();
+    if (nq) {
+      tabs.push({ id: 'name', label: `שם: ${nq}` });
+    }
+    const ag = this._ageFilter();
+    if (ag != null) {
+      tabs.push({ id: 'age', label: `גיל: ${ag}` });
+    }
+    return tabs;
   });
 
   readonly activeCount = computed(() => this._state().data.filter((s) => s.isActive).length);
@@ -78,6 +134,35 @@ export class StudentsStore {
   /** סינון תצוגה: null = כולם, true/false = פעילים / לא פעילים בלבד. */
   setActiveFilter(value: boolean | null): void {
     this._filterActive.set(value);
+  }
+
+  /** החלה מלאה מהחלונית «סינון תלמידים». */
+  applyListFilters(f: StudentsListFilters): void {
+    this._filterActive.set(f.status);
+    this._nameQuery.set(f.nameQuery);
+    this._ageFilter.set(f.age);
+  }
+
+  /** איפוס כל מסנני הרשימה (סטטוס, שם, גיל). */
+  clearListFilters(): void {
+    this._filterActive.set(null);
+    this._nameQuery.set('');
+    this._ageFilter.set(null);
+  }
+
+  /** הסרת מסנן יחיד לפי הטאב. */
+  clearFilterTab(id: StudentsFilterTabId): void {
+    switch (id) {
+      case 'status':
+        this._filterActive.set(null);
+        break;
+      case 'name':
+        this._nameQuery.set('');
+        break;
+      case 'age':
+        this._ageFilter.set(null);
+        break;
+    }
   }
 
   /** יוצר תלמיד ומוסיף לרשימה המקומית. */
