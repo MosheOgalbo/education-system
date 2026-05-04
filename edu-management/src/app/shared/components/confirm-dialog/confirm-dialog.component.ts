@@ -5,6 +5,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 
 export interface ConfirmDialogData {
   title: string;
@@ -15,15 +16,26 @@ export interface ConfirmDialogData {
   destructive?: boolean;
   /** true — רק כפתור סגירה אחד (התראה / הסבר), ללא אישור פעולה. */
   alertOnly?: boolean;
+  /** כותרת כתומה עם אייקון אזהרה (משולש). */
+  warningHeader?: boolean;
 }
 
 @Component({
   selector: 'app-confirm-dialog',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatDialogModule, MatButtonModule],
+  imports: [MatDialogModule, MatButtonModule, MatIconModule],
   template: `
-    <h2 mat-dialog-title class="confirm-dialog__title">{{ data.title }}</h2>
+    <h2
+      mat-dialog-title
+      class="confirm-dialog__title"
+      [class.confirm-dialog__title--warning]="data.warningHeader"
+    >
+      @if (data.warningHeader) {
+        <mat-icon class="confirm-dialog__warn-icon" aria-hidden="true">warning</mat-icon>
+      }
+      {{ data.title }}
+    </h2>
     <mat-dialog-content class="confirm-dialog__body">
       <p class="confirm-dialog__message">{{ data.message }}</p>
     </mat-dialog-content>
@@ -53,6 +65,21 @@ export interface ConfirmDialogData {
       font-size: 1.15rem;
       font-weight: 700;
       color: var(--gov-text);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .confirm-dialog__title--warning {
+      color: #e65100;
+    }
+
+    .confirm-dialog__warn-icon {
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      font-size: 28px;
+      color: #e65100;
     }
 
     .confirm-dialog__body {

@@ -202,8 +202,8 @@ export class EducationPlacesPageComponent {
     if (row.status === 'active' || row.status === 'suspended') {
       if (row.status === 'suspended') {
         return (
-          'לא ניתן למחוק פנימייה במצב «השהייה». יש להעביר תחילה למצב «לא פעילה» ' +
-          '(«מעבר ללא פעילה» בתפריט הפעולות). לאחר מכן, כשאין תלמידים משויכים — ניתן למחוק.'
+          'לא ניתן למחוק פנימייה במצב «השהייה». יש להעביר תחילה למצב «לא פעילה» («מעבר ללא פעילה» בתפריט הפעולות). ' +
+          'לאחר מכן, כשאין תלמידים משויכים — ניתן למחוק.'
         );
       }
       return (
@@ -232,6 +232,7 @@ export class EducationPlacesPageComponent {
           title: 'לא ניתן למחוק',
           message: blocked,
           alertOnly: true,
+          warningHeader: true,
           confirmLabel: 'סגירה',
         },
       });
