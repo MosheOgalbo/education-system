@@ -34,6 +34,7 @@
 | **`edu-management/`** | אפליקציית **Angular 21** — UI מודרני; `README.md` עם עץ קבצים מלא. |
 | **`angularjs-client/`** | לקוח **AngularJS 1.8** — דוגמה למטלה עם async/await וטיפול בשגיאות. |
 | **`docker-compose.yml`** | הרצה מקומית: SQL Server, אתחול סכמה, API. |
+| **`deploy/`** | **איך מעלים לאוויר:** [מדריך מלא](deploy/README.md) · [Kubernetes](deploy/kubernetes/README.md) · [AWS](deploy/aws/README.md). |
 
 ---
 

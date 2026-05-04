@@ -1,0 +1,14 @@
+# ברירת מחדל: פריסה מול SQL מנוהל (RDS). DB פנימי בקלאסטר: ראו overlays/full-stack
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - overlays/rds
+
+# דוגמה להחלפת תמונות ל-ECR אחרי docker push (העתיקו לכאן או ל-overlays/rds):
+# images:
+#   - name: education-api
+#     newName: 123456789012.dkr.ecr.eu-west-1.amazonaws.com/education-api
+#     newTag: v1
+#   - name: education-web
+#     newName: 123456789012.dkr.ecr.eu-west-1.amazonaws.com/education-web
+#     newTag: v1

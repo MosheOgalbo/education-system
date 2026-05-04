@@ -1,0 +1,33 @@
+# פריסה מלאה בקלאסטר: SQL Server + Job אתחול DB + API + Web (מקביל ל-docker-compose).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: education-system
+
+resources:
+  - ../../base
+  - sqlserver-pvc.yaml
+  - sqlserver-deployment.yaml
+  - sqlserver-service.yaml
+  - job-db-init.yaml
+  - api-deployment.yaml
+  # api-service, web, configmap, namespace מגיעים מ-base
+
+configMapGenerator:
+  # עותקים תחת assets/ (מסונכרנים מ-database/) — kustomize מאפשר רק קבצים מתחת ל-overlay
+  - name: db-init-script
+    files:
+      - init-db.sh=assets/init-db.sh
+  - name: db-migration-sql
+    files:
+      - 01_create_tables.sql=assets/migrations/01_create_tables.sql
+      - 02_indexes.sql=assets/migrations/02_indexes.sql
+      - 03_stored_procedure.sql=assets/migrations/03_stored_procedure.sql
+      - 04_seed_data.sql=assets/migrations/04_seed_data.sql
+      - 05_education_place_is_active.sql=assets/migrations/05_education_place_is_active.sql
+      - 06_education_place_status.sql=assets/migrations/06_education_place_status.sql
+      - 07_place_stats_include_inactive_students.sql=assets/migrations/07_place_stats_include_inactive_students.sql
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+# images: (ECR) — אותו דפוס כמו בקובץ השורש

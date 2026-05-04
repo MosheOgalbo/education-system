@@ -1,0 +1,23 @@
+# דורש Ingress Controller בקלאסטר.
+# EKS + AWS Load Balancer Controller: הגדירו ingressClassName: alb והוסיפו annotations מתאימים (ראו deploy/aws/README.md).
+# אם אין Ingress: LoadBalancer על education-web או kubectl port-forward לבדיקות.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: education-web
+  namespace: education-system
+  labels:
+    app.kubernetes.io/name: education-system
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: education.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: education-web
+                port:
+                  number: 80

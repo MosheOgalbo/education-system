@@ -23,6 +23,10 @@ pnpm-debug.log*
 .env
 .env.*
 
+# Kubernetes DB secrets (copied from *.example)
+deploy/kubernetes/secret-connection-string.yaml
+deploy/kubernetes/overlays/full-stack/secret-full-stack.yaml
+
 # IDE/editor
 .vscode/
 .idea/

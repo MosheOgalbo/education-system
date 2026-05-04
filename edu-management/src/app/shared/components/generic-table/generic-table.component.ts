@@ -117,7 +117,7 @@ import { ColumnDef, TableAction, SortState } from './generic-table.types';
                       "
                       matTooltipPosition="before"
                       [class.actions-mat-menu__item--warn]="action.color === 'warn'"
-                      (click)="action.handler(row)"
+                      (click)="invokeAction(action, row)"
                     >
                       <mat-icon>{{ action.iconFn ? action.iconFn(row) : action.icon }}</mat-icon>
                       <span>{{ action.labelFn ? action.labelFn(row) : action.label }}</span>
@@ -135,7 +135,7 @@ import { ColumnDef, TableAction, SortState } from './generic-table.types';
                         : (action.tooltip ?? action.label)
                     "
                     [disabled]="action.disabled ? action.disabled(row) : false"
-                    (click)="action.handler(row); $event.stopPropagation()"
+                    (click)="invokeAction(action, row); $event.stopPropagation()"
                   >
                     <mat-icon>{{ action.iconFn ? action.iconFn(row) : action.icon }}</mat-icon>
                   </button>
@@ -367,6 +367,11 @@ export class GenericTableComponent<T extends object> {
     if (this.rowClickable()) {
       this.rowClick.emit(row);
     }
+  }
+
+  /** הפעלת פעולת שורה מתפריט או כפתור אייקון. */
+  protected invokeAction(action: TableAction<T>, row: T): void {
+    action.handler(row);
   }
 
   /** עדכון מצב מיון מ-MatSort. */

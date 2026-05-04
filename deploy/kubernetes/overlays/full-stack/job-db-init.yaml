@@ -1,0 +1,53 @@
+# Job חד-פעמי — מריץ את database/init-db.sh ואת קבצי המיגרציה מול sqlserver.
+# אחרי כשלון: kubectl delete job db-init -n education-system && kubectl apply -f job-db-init.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-init
+  namespace: education-system
+  labels:
+    app.kubernetes.io/name: education-system
+    app.kubernetes.io/component: db-init
+spec:
+  ttlSecondsAfterFinished: 86400
+  backoffLimit: 5
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: education-system
+        app.kubernetes.io/component: db-init
+    spec:
+      restartPolicy: Never
+      nodeSelector:
+        kubernetes.io/arch: amd64
+      containers:
+        - name: db-init
+          image: mcr.microsoft.com/mssql-tools:latest
+          imagePullPolicy: IfNotPresent
+          command: ["sh", "/scripts/init-db.sh"]
+          env:
+            - name: DB_HOST
+              value: sqlserver
+            - name: DB_PORT
+              value: "1433"
+            - name: DB_USER
+              value: sa
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: education-db
+                  key: SA_PASSWORD
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts/init-db.sh
+              subPath: init-db.sh
+            - name: migrations
+              mountPath: /migrations
+      volumes:
+        - name: scripts
+          configMap:
+            name: db-init-script
+            defaultMode: 0755
+        - name: migrations
+          configMap:
+            name: db-migration-sql

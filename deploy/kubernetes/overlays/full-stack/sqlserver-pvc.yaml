@@ -1,0 +1,15 @@
+# נפח לנתוני SQL Server (עותק אחד — Deployment עם אסטרטגיית Recreate).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sqlserver-data
+  namespace: education-system
+  labels:
+    app.kubernetes.io/name: education-system
+    app.kubernetes.io/component: sqlserver
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi

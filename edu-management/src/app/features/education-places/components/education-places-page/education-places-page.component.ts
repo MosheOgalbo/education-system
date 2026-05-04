@@ -148,16 +148,7 @@ export class EducationPlacesPageComponent {
       icon: 'delete',
       label: 'מחיקת פנימייה',
       color: 'warn',
-      disabled: (row) => row.status !== 'inactive' || row.totalStudentCount > 0,
-      tooltipFn: (row) => {
-        if (row.status === 'active' || row.status === 'suspended') {
-          return 'מחיקה אפשרית רק ב«לא פעילה». יש לעדכן סטטוס בתפריט הפעולות.';
-        }
-        if (row.totalStudentCount > 0) {
-          return 'יש להסיר את כל התלמידים המשויכים לפני מחיקה.';
-        }
-        return 'מחיקה סופית מהמערכת';
-      },
+      tooltipFn: (row) => this.deleteBlockedReason(row) ?? 'מחיקה סופית מהמערכת',
       handler: (row) => this.confirmDeletePlace(row),
     },
   ];
@@ -203,8 +194,50 @@ export class EducationPlacesPageComponent {
       : 'מעבר ל«לא פעילה»';
   }
 
-  /** מחיקה לאחר אישור בדיאלוג המערכת (לא window.confirm). */
+  /**
+   * סיבת חסימת מחיקה — תואם לבקאנד: לא במצב «לא פעילה», או עם תלמידים משויכים.
+   * סטטוס השהייה מנוסח במפורש למודל משוב משתמש.
+   */
+  protected deleteBlockedReason(row: EducationPlaceStatsDto): string | null {
+    if (row.status === 'active' || row.status === 'suspended') {
+      if (row.status === 'suspended') {
+        return (
+          'לא ניתן למחוק פנימייה במצב «השהייה». יש להעביר תחילה למצב «לא פעילה» ' +
+          '(«מעבר ללא פעילה» בתפריט הפעולות). לאחר מכן, כשאין תלמידים משויכים — ניתן למחוק.'
+        );
+      }
+      return (
+        'לא ניתן למחוק פנימייה במצב «פעילה». יש להעביר תחילה למצב «לא פעילה» ' +
+        'בתפריט הפעולות; לאחר מכן, כשאין תלמידים משויכים — ניתן למחוק.'
+      );
+    }
+    if (row.totalStudentCount > 0) {
+      return (
+        'לא ניתן למחוק פנימייה שיש לה תלמידים משויכים. ' +
+        'יש להסיר או להעביר את כל התלמידים לפני המחיקה.'
+      );
+    }
+    return null;
+  }
+
+  /** מחיקה לאחר אישור בדיאלוג; אם הפעולה חסומה — מודל עם הסיבה (לא ניתן לאשר מחיקה). */
   protected confirmDeletePlace(row: EducationPlaceStatsDto): void {
+    const blocked = this.deleteBlockedReason(row);
+    if (blocked) {
+      this.dialog.open<ConfirmDialogComponent, ConfirmDialogData, boolean>(ConfirmDialogComponent, {
+        width: '420px',
+        maxWidth: '95vw',
+        autoFocus: 'first-tabbable',
+        data: {
+          title: 'לא ניתן למחוק',
+          message: blocked,
+          alertOnly: true,
+          confirmLabel: 'סגירה',
+        },
+      });
+      return;
+    }
+
     const ref = this.dialog.open<ConfirmDialogComponent, ConfirmDialogData, boolean>(
       ConfirmDialogComponent,
       {
@@ -213,7 +246,7 @@ export class EducationPlacesPageComponent {
         autoFocus: 'first-tabbable',
         data: {
           title: 'מחיקת פנימייה',
-          message: `למחוק את "${row.name}" מהמערכת? מחיקה אפשרית רק כשהסטטוס «לא פעילה» ואין תלמידים משויכים.`,
+          message: `למחוק את "${row.name}" מהמערכת? הפעולה סופית.`,
           confirmLabel: 'מחיקה',
           destructive: true,
         },

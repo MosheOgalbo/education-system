@@ -1,0 +1,9 @@
+# API + Web + Secret חיצוני (RDS) — בלי SQL Server בקלאסטר.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: education-system
+resources:
+  - ../../base
+  - api-deployment.yaml
+
+# images: (ECR) — ראו הערות בקובץ deploy/kubernetes/kustomization.yaml

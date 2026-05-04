@@ -45,7 +45,7 @@
 .filter-bar {
   display: flex;
   gap: 14px;
-  align-items: flex-end;
+  align-items: center;
   flex-wrap: wrap;
   padding: 18px 16px;
   border-radius: 10px;
@@ -69,6 +69,38 @@
 .filter-bar__open-filter {
   flex-shrink: 0;
   color: var(--gov-header);
+  /* יישור גובה לשדה outline (כניסה לטאץ׳ ~56px) */
+  width: 56px;
+  height: 56px;
+  padding: 0;
+}
+
+.filter-tabs-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 0 12px 0 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 61, 122, 0.12);
+  box-shadow: 0 1px 3px rgba(0, 61, 122, 0.06);
+  min-height: 48px;
+}
+
+.filter-tabs-row .filter-tabs {
+  flex: 1;
+  min-width: min(100%, 200px);
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+}
+
+.filter-tabs-row__clear {
+  flex-shrink: 0;
+  align-self: center;
+  min-height: 48px;
+  height: 48px;
+  margin: 0;
 }
 
 .filter-tabs {

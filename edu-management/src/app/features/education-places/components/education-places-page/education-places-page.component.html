@@ -47,7 +47,7 @@
       <mat-icon aria-hidden="true">filter_list</mat-icon>
     </button>
 
-    @if (hasActiveFilters()) {
+    @if (hasActiveFilters() && store.filterTabs().length === 0) {
       <button
         mat-stroked-button
         color="primary"
@@ -63,21 +63,43 @@
   </div>
 
   @if (store.filterTabs().length > 0) {
-    <nav mat-tab-nav-bar class="filter-tabs gov-surface" [tabPanel]="filterTabsPanel" role="navigation" aria-label="מסננים פעילים">
-      @for (tab of store.filterTabs(); track tab.id) {
-        <a
-          mat-tab-link
+    <div class="filter-tabs-row gov-surface">
+      <nav
+        mat-tab-nav-bar
+        class="filter-tabs"
+        [tabPanel]="filterTabsPanel"
+        role="navigation"
+        aria-label="מסננים פעילים"
+      >
+        @for (tab of store.filterTabs(); track tab.id) {
+          <a
+            mat-tab-link
+            type="button"
+            href="#"
+            class="filter-tabs__link"
+            role="button"
+            [attr.aria-label]="'הסר סינון: ' + tab.label"
+            (click)="onFilterTabClick(tab.id, $event)"
+          >
+            {{ tab.label }}
+          </a>
+        }
+      </nav>
+      @if (hasActiveFilters()) {
+        <button
+          mat-stroked-button
+          color="primary"
           type="button"
-          href="#"
-          class="filter-tabs__link"
-          role="button"
-          [attr.aria-label]="'הסר סינון: ' + tab.label"
-          (click)="onFilterTabClick(tab.id, $event)"
+          class="filter-tabs-row__clear"
+          (click)="onClearFilters()"
+          matTooltip="ניקוי כל המסננים"
+          aria-label="ניקוי כל המסננים"
         >
-          {{ tab.label }}
-        </a>
+          <mat-icon aria-hidden="true">filter_alt_off</mat-icon>
+          ניקוי מסננים
+        </button>
       }
-    </nav>
+    </div>
     <mat-tab-nav-panel #filterTabsPanel class="filter-tabs-panel" />
   }
 
@@ -138,12 +160,7 @@
                 <mat-icon aria-hidden="true">{{ toggleIcon(place) }}</mat-icon>
                 <span>{{ toggleLabel(place) }}</span>
               </button>
-              <button
-                mat-menu-item
-                type="button"
-                [disabled]="place.status !== 'inactive' || place.totalStudentCount > 0"
-                (click)="confirmDeletePlace(place)"
-              >
+              <button mat-menu-item type="button" (click)="confirmDeletePlace(place)">
                 <mat-icon class="warn-icon" aria-hidden="true">delete</mat-icon>
                 <span>מחיקת פנימייה</span>
               </button>

@@ -13,6 +13,8 @@ export interface ConfirmDialogData {
   cancelLabel?: string;
   /** true — כפתור אישור בצבע warn (מחיקות). */
   destructive?: boolean;
+  /** true — רק כפתור סגירה אחד (התראה / הסבר), ללא אישור פעולה. */
+  alertOnly?: boolean;
 }
 
 @Component({
@@ -26,17 +28,23 @@ export interface ConfirmDialogData {
       <p class="confirm-dialog__message">{{ data.message }}</p>
     </mat-dialog-content>
     <mat-dialog-actions align="end" class="confirm-dialog__actions">
-      <button mat-button type="button" [mat-dialog-close]="false">
-        {{ data.cancelLabel ?? 'ביטול' }}
-      </button>
-      <button
-        mat-flat-button
-        type="button"
-        [color]="data.destructive ? 'warn' : 'primary'"
-        [mat-dialog-close]="true"
-      >
-        {{ data.confirmLabel ?? 'אישור' }}
-      </button>
+      @if (data.alertOnly) {
+        <button mat-flat-button type="button" color="primary" [mat-dialog-close]="false">
+          {{ data.confirmLabel ?? 'הבנתי' }}
+        </button>
+      } @else {
+        <button mat-button type="button" [mat-dialog-close]="false">
+          {{ data.cancelLabel ?? 'ביטול' }}
+        </button>
+        <button
+          mat-flat-button
+          type="button"
+          [color]="data.destructive ? 'warn' : 'primary'"
+          [mat-dialog-close]="true"
+        >
+          {{ data.confirmLabel ?? 'אישור' }}
+        </button>
+      }
     </mat-dialog-actions>
   `,
   styles: `
