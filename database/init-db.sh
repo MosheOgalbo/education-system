@@ -1,7 +1,9 @@
 #!/bin/sh
+# אתחול סכמה ונתוני דמו אחרי עליית SQL Server — רץ מתוך קונטיינר db-init ב-docker-compose.
+# למה לולאת until: SQL עולה לפעמים אחרי שהפורט פתוח; מחכים לפני הרצת sqlcmd כדי שלא ייכשלו מיגרציות מוקדם.
 set -eu
 
-# mssql-tools image uses /opt/mssql-tools/bin/sqlcmd (not mssql-tools18)
+# בתמונת mssql-tools הנתיב הוא sqlcmd תחת /opt/mssql-tools (לא mssql-tools18 כמו ב-healthcheck של sqlserver)
 SQLCMD="/opt/mssql-tools/bin/sqlcmd"
 SERVER="${DB_HOST:-sqlserver},${DB_PORT:-1433}"
 USER="${DB_USER:-sa}"

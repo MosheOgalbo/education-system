@@ -1,3 +1,6 @@
+# Education System — הרצה מקומית אחודה.
+# למה Docker Compose: אותו סביבה לכל מפתח, SQL+API+UI בפקודה אחת, בלי התקנת SQL Server ידנית על המחשב.
+# למה platform linux/amd64 ל-SQL: התמונה הרשמית amd64; על Mac ב-M1/M2 רצה באמולציה — תיעוד מודעות.
 services:
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest

@@ -1,3 +1,4 @@
+# בנייה רב-שלבית: שלב build עם SDK מלא, שלב final רק עם ASP.NET runtime — תמונה קטנה ומהירה יותר לפריסה.
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
@@ -9,12 +10,14 @@ COPY ["src/EducationSystem.Infrastructure/EducationSystem.Infrastructure.csproj"
 RUN dotnet restore "EducationSystem.sln"
 
 COPY . .
+# UseAppHost=false — הרצה דרך dotnet בתוך קונטיינר ללא executable נפרד (סטנדרטי ל-Linux containers).
 RUN dotnet publish "src/EducationSystem.API/EducationSystem.API.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 COPY --from=build /app/publish .
 
+# פורט 8080 פנימי תואם למיפוי ב-docker-compose ב-host.
 ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
 

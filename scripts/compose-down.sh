@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# From repo root: stops Docker Compose stack and removes orphans.
-# Optional: also free the host dev server port used by `ng serve` (default 4200).
+# מוריד את סטאק Docker Compose (מהשורש של הריפו) ומסיר קונטיינרים יתומים.
+# למה סקריפט נפרד ולא רק תיעוד: אפשר בפקודה אחת גם לשחרר פורט ש-host ng serve תפס — נפוץ אחרי פיתוח מקומי.
+#
+# אופציונלי: שחרור פורט של ng serve (ברירת מחדל 4200) על המחשב המארח:
 #
 #   ./scripts/compose-down.sh
 #   KILL_NG_SERVE_PORT=4200 ./scripts/compose-down.sh

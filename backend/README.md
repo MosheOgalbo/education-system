@@ -16,66 +16,77 @@
 
 ## עץ הפרויקט (קבצים ותיקיות)
 
+מפת תיקיות עם הסבר קצר בעברית — **מה כל פריט עושה בפרויקט**.
+
 ```
 backend/
-├── Dockerfile                          # בניית אימג' רב-שלבי: SDK → publish → runtime aspnet על פורט 8080
-├── EducationSystem.sln                 # פתרון Visual Studio / `dotnet build`
-├── EducationSystem.slnx                # פורמט פתרון חלופי (XML מודרני)
-├── .gitignore
-├── README.md
-├── API-README.md                  # מדריך REST: נתיבים, סכמות JSON, דוגמאות
+├── Dockerfile                       # Multi-stage: SDK לבנייה ופרסום → אימג' aspnet קטן; האזנה על פורט 8080.
+├── EducationSystem.sln              # קובץ פתרון קלאסי — רשימת כל הפרויקטים; `dotnet build` מהשורש.
+├── EducationSystem.slnx             # פורמט פתרון מודרני (Visual Studio / dotnet — אלטרנטיבה ל-.sln).
+├── .gitignore                       # לא לדחוף bin/obj, לוגים וקבצי משתמש מקומיים.
+├── README.md                        # תיעוד זה — מבנה, DTOs, הרצה.
+├── API-README.md                    # מדריך REST מפורט: נתיבים, גופים, דוגמאות JSON.
 └── src/
-    ├── EducationSystem.API/            # שכבת ה-HTTP — נקודת הכניסה לאפליקציה
-    │   ├── EducationSystem.API.csproj
-    │   ├── EducationSystem.API.http    # דוגמאות בקשות ל-REST Client ב-VS Code
-    │   ├── Program.cs                  # רישום שירותים, Serilog, CORS, Swagger, pipeline
-    │   ├── appsettings.json            # הגדרות כלליות (חיבור DB, Serilog)
-    │   ├── appsettings.Development.json
+    ├── EducationSystem.API/                      # שכבת HTTP בלבד — נקודת הכניסה של התהליך.
+    │   ├── EducationSystem.API.csproj            # הפניות לפרויקטים Application/Infrastructure; הגדרות Swagger/XML.
+    │   ├── EducationSystem.API.http              # דוגמאות REST לבדיקה ידנית ב-VS Code REST Client.
+    │   ├── Program.cs                            # הרכבת האפליקציה: Serilog, DI, CORS, Swagger, middleware, מיפוי controllers.
+    │   ├── appsettings.json                      # חיבור למסד, Serilog — ברירות מחדל לכל הסביבות.
+    │   ├── appsettings.Development.json          # עקיפות לפיתוח (למשל רמת לוג).
     │   ├── Properties/
-    │   │   └── launchSettings.json     # פרופילי הרצה (URLs, משתני סביבה)
+    │   │   └── launchSettings.json               # פרופילי `dotnet run`: URLs, משתני סביבה.
     │   ├── Controllers/
-    │   │   ├── EducationPlacesController.cs
-    │   │   └── StudentsController.cs
-    │   └── Middleware/
-    │       └── GlobalExceptionMiddleware.cs
+    │   │   ├── EducationPlacesController.cs      # REST לפנימיות: רשימה/יחידה, CRUD, PATCH פעילות, מחיקה.
+    │   │   └── StudentsController.cs             # REST לתלמידים: רשימה מסוננת, CRUD, upsert.
+    │   ├── Middleware/
+    │   │   └── GlobalExceptionMiddleware.cs      # לכידת חריגות גלובלית ותשובת JSON אחידה + לוגים.
+    │   └── Notifications/
+    │       └── LoggingCriticalErrorNotifier.cs   # מימוש `ICriticalErrorNotifier` — לוג לשגיאות קריטיות (נקודת הרחבה ל-Sentry וכו').
     │
-    ├── EducationSystem.Application/    # לוגיקה עסקית, חוזים (ממשקים), DTOs, חריגות מותאמות
+    ├── EducationSystem.Application/              # לוגיקה עסקית, חוזים, DTOs — ללא תלות ב־ASP.NET או ב-SQL.
     │   ├── EducationSystem.Application.csproj
-    │   ├── DTOs/                       # אובייקטי העברה — records קטנים וברורים
-    │   │   ├── CreateEducationPlaceDto.cs
-    │   │   ├── CreateStudentDto.cs
-    │   │   ├── EducationPlaceDto.cs
-    │   │   ├── EducationPlaceStatsDto.cs
-    │   │   ├── SetEducationPlaceActiveDto.cs
-    │   │   ├── StudentDto.cs
-    │   │   ├── UpdateEducationPlaceDto.cs
-    │   │   ├── UpdateStudentDto.cs
-    │   │   └── UpsertStudentDto.cs
+    │   ├── DTOs/                                 # חוזה נתונים עם הלקוח — records קלים לקריאה ולסריאליזציה JSON.
+    │   │   ├── CreateEducationPlaceDto.cs        # גוף POST ליצירת פנימייה.
+    │   │   ├── CreateStudentDto.cs               # גוף POST ליצירת תלמיד.
+    │   │   ├── EducationPlaceDto.cs              # תגובת פנימייה בלי אגרגציות סטטיסטיקה.
+    │   │   ├── EducationPlaceStatsDto.cs          # פנימייה + ספירת תלמידים פעילים + גיל ממוצע.
+    │   │   ├── SetEducationPlaceActiveDto.cs    # גוף PATCH לסטטוס פעילות.
+    │   │   ├── StudentDto.cs                     # תגובת תלמיד מלאה.
+    │   │   ├── UpdateEducationPlaceDto.cs       # גוף PUT לעדכון שם ועיר.
+    │   │   ├── UpdateStudentDto.cs                # גוף PUT לעדכון תלמיד.
+    │   │   └── UpsertStudentDto.cs               # גוף POST ל-upsert לפי מזהה בגוף.
+    │   ├── Enums/
+    │   │   └── EducationPlaceStatus.cs           # מצבי פנימייה (פעילה / לא פעילה / מושהית) ללוגיקת שירות.
     │   ├── Exceptions/
-    │   │   └── AppExceptions.cs        # ValidationException, NotFoundException
+    │   │   └── AppExceptions.cs                  # ValidationException, NotFoundException — ממופות במידלוור ל-HTTP.
     │   ├── Interfaces/
-    │   │   ├── IEducationPlaceRepository.cs
-    │   │   ├── IEducationPlaceService.cs
-    │   │   ├── IStudentRepository.cs
-    │   │   └── IStudentService.cs
-    │   └── Services/
-    │       ├── EducationPlaceService.cs
-    │       └── StudentService.cs
+    │   │   ├── ICriticalErrorNotifier.cs        # חוזה להתראה על שגיאות 500 (הפרדת תשתית מהדומיין).
+    │   │   ├── IEducationPlaceRepository.cs     # גישה לנתוני פנימיות — מימוש ב-Infrastructure.
+    │   │   ├── IEducationPlaceService.cs        # פעולות עסקיות על פנימיות.
+    │   │   ├── IStudentRepository.cs             # גישה לנתוני תלמידים.
+    │   │   └── IStudentService.cs               # פעולות עסקיות על תלמידים.
+    │   ├── Models/
+    │   │   └── CriticalErrorContext.cs           # הקשר בקשה (מזהה מעקב, נתיב) להעברה למערכת התראות.
+    │   ├── Services/
+    │   │   ├── EducationPlaceService.cs          # כללי עסק לפנימיות: ולידציה, סטטוס, מחיקה מותנית.
+    │   │   └── StudentService.cs                 # כללי עסק לתלמידים: גיל, ייחודיות ת״ז, upsert, שיבוץ לפנימייה.
+    │   └── Validation/
+    │       └── BusinessInputValidators.cs        # ולידציות קלט משותפות (שם, עיר) בשירותים.
     │
-    ├── EducationSystem.Domain/         # ישויות דומיין (מודל מסד — ללא תלות ב-API)
+    ├── EducationSystem.Domain/                   # ישויות טהורות — מודל דומיין ללא תלות במסגרות.
     │   ├── EducationSystem.Domain.csproj
     │   └── Entities/
-    │       ├── EducationPlace.cs
-    │       └── Student.cs
+    │       ├── EducationPlace.cs                 # ייצוג פנימייה במסד (שדות וסטטוס).
+    │       └── Student.cs                        # ייצוג תלמיד במסד.
     │
-    └── EducationSystem.Infrastructure/ # גישה לנתונים — Dapper + SQL Server
-        ├── EducationSystem.Infrastructure.csproj
+    └── EducationSystem.Infrastructure/           # גישה לנתונים: Dapper, פקודות SQL, פרוצדורות.
+        ├── EducationSystem.Infrastructure.csproj # הפניה ל-Dapper ול-SQL Client; תלות ב-Domain/Application.
         └── Repositories/
-            ├── EducationPlaceRepository.cs
-            └── StudentRepository.cs
+            ├── EducationPlaceRepository.cs       # שאילתות ו-SP לפנימיות וסטטיסטיקה.
+            └── StudentRepository.cs              # CRUD ו-upsert לתלמידים עם פרמטרים מקושחים.
 ```
 
-**הערה:** אין כרגע תיקיית `tests/` בפתרון — אפשר להוסיף יחידות בדיקה לשירותים ולאינטגרציה לרפוזיטורי.
+**הערה:** אין כרגע פרויקט `tests/` בפתרון — ניתן להוסיף xUnit לאפליקציה ולאינטגרציה למסד.
 
 ---
 
@@ -96,34 +107,55 @@ backend/
 
 ### EducationSystem.API
 
-- **`Program.cs`** — יוצר את האפליקציה: Serilog (קונסול + קבצים מתגלגלים), רישום `IDbConnection` כ־Scoped עם `SqlConnection`, רישום רפוזיטורי ושירותים, מדיניות CORS (`AllowAngular` — בפיתוח כל localhost), Swagger, `GlobalExceptionMiddleware` לפני שאר ה-pipeline, הפניה מ־`/` ל־Swagger, `MapControllers`.
-- **`GlobalExceptionMiddleware.cs`** — תופס `ValidationException` → 400, `NotFoundException` → 404, כל השאר → 500 עם הודעה גנרית בעברית; לוגים; `NotifyCriticalAsync` כ־stub להתראות עתידיות.
-- **`EducationPlacesController.cs`** — REST לפנימיות: רשימה/יחיד עם סטטיסטיקה, יצירה, עדכון שם/עיר, **PATCH** לסטטוס פעילות, מחיקה (עם כלל עסקי אם יש תלמידים).
-- **`StudentsController.cs`** — רשימה (אופציונלי לפי `educationPlaceId`), לפי מזהה, CRUD, ו־`POST .../upsert` לאיחוד יצירה/עדכון בקריאה אחת.
-- **`appsettings*.json`** — מחרוזות חיבור, לוגים.
-- **`launchSettings.json`** — URL להרצה מקומית.
-- **`EducationSystem.API.http`** — דוגמאות HTTP לבדיקה ידנית.
+| קובץ / תיקייה | תפקיד |
+|---------------|--------|
+| **`Program.cs`** | אתחול Serilog; רישום `IDbConnection` כ-Scoped; רישום repositories, services, `ICriticalErrorNotifier`; CORS; Swagger; מידלוור שגיאות; מיפוי `/` ל-Swagger ו-`MapControllers`. |
+| **`GlobalExceptionMiddleware.cs`** | מיפוי `ValidationException`→400, `NotFoundException`→404, אחרת→500; לוגים עם Scope; קריאה ל-notifier על שגיאות קריטיות. |
+| **`Controllers/EducationPlacesController.cs`** | נקודות קצה לפנימיות: GET רשימה/יחידה עם סטטיסטיקה, POST/PUT/PATCH/DELETE תואמי ה-DTOs. |
+| **`Controllers/StudentsController.cs`** | נקודות קצה לתלמידים: GET עם `educationPlaceId` אופציונלי, GET לפי id, POST/PUT/DELETE, POST upsert. |
+| **`Middleware/`** | רק middleware גלובלי לשגיאות — הפרדה מקוד הקונטרולרים. |
+| **`Notifications/LoggingCriticalErrorNotifier.cs`** | מימוש התראות קריטיות כלוג מובנה (ניתן להחליף בשירות חיצוני בלי לשנות מידלוור). |
+| **`appsettings.json` / `appsettings.Development.json`** | מחרוזות חיבור, Serilog, עקיפות סביבה. |
+| **`Properties/launchSettings.json`** | פרופילי הרצה מקומית (פורטים, `ASPNETCORE_ENVIRONMENT`). |
+| **`EducationSystem.API.http`** | אוסף בקשות לבדיקה ידנית ולהדגמה בראיון. |
+| **`EducationSystem.API.csproj`** | הפניות לפרויקטים, הפקת XML לתיעוד Swagger, גרסת Target Framework. |
 
 ### EducationSystem.Application
 
-- **DTOs** — חוזה ה-API מול הלקוח: `EducationPlaceStatsDto` כולל `activeStudentCount`, `averageAge`, `isActive`; `EducationPlaceDto` לתשובות POST/PUT/PATCH ללא סטטיסטיקה מחושבת; DTOs לתלמיד עם ייחודיות `identityNumber`.
-- **`AppExceptions.cs`** — חריגות מסוגים כדי שהמידלוור ימפה לקוד HTTP נכון.
-- **ממשקים `I*Service` / `I*Repository`** — Dependency Inversion: השירות תלוי בממשק, לא במימוש SQL.
-- **`StudentService`** — ולידציית גיל (5–25); בדיקת פנימייה קיימת **ופעילה** (404 אם לא קיימת, 400 אם לא פעילה); ייחודיות תעודת זהות; Upsert עם בדיקת מזהה.
-- **`EducationPlaceService`** — שליפה עם סטטיסטיקה, CRUD, עדכון פעילות, מחיקה רק אם אין תלמידים משויכים.
+| קובץ / תיקייה | תפקיד |
+|---------------|--------|
+| **`DTOs/*`** | חוזה JSON עם הלקוח — שדות camelCase בצד HTTP; הפרדה בין «עם סטטיסטיקה» (`EducationPlaceStatsDto`) לבין תגובות POST/PUT רגילות. |
+| **`Enums/EducationPlaceStatus.cs`** | מצבי פנימייה לעסק — לא כפילות מחרוזות בכל השירות. |
+| **`Exceptions/AppExceptions.cs`** | טיפוסי חריגה ייעודיים כדי שהמידלוור יזהה וימפה ל-HTTP בלי `if` על מחרוזות. |
+| **`Interfaces/`** | חוזים לשירותים ולרפוזיטורי + `ICriticalErrorNotifier` — DI נקי והחלפת מימושים בבדיקות. |
+| **`Models/CriticalErrorContext.cs`** | נתוני הקשר לשגיאה קריטית (מסלול, מזהה מעקב) להעברה למערכת ניטור. |
+| **`Services/StudentService.cs`** | כללי עסק: גיל, ת״ז ייחודית, פנימייה קיימת ופעילה, upsert. |
+| **`Services/EducationPlaceService.cs`** | כללי עסק: CRUD, מעבר סטטוס, מחיקה רק כשאין תלמידים וכו'. |
+| **`Validation/BusinessInputValidators.cs`** | ולידציית שם/עיר משותפת — DRY בין שירותי פנימיות. |
 
 ### EducationSystem.Domain
 
-- **`Student` / `EducationPlace`** — תכונות המודל כפי שבמסד (כולל חותמות זמן במידת הצורך) — שכבה דקה לייצוג דומיין.
+| קובץ | תפקיד |
+|------|--------|
+| **`Entities/EducationPlace.cs`** | מודל ישות פנימייה — נטען ונשמר דרך Infrastructure בלי תלות ב-Controllers. |
+| **`Entities/Student.cs`** | מודל ישות תלמיד — אותו עיקרון הפרדה. |
 
 ### EducationSystem.Infrastructure
 
-- **`StudentRepository`** — שאילתות Dapper: סינון לפי פנימייה, INSERT/UPDATE/DELETE עם `OUTPUT INSERTED...`, `UpsertSql` עם `IF @Id IS NULL OR @Id = 0`, בדיקת כפילות תעודת זהות.
-- **`EducationPlaceRepository`** — `sp_GetEducationPlacesWithStats` לרשימה; שאילתת GROUP BY ליחיד; `GetIsActiveIfExistsAsync` לתמיכה בכללי שיבוץ; ספירת תלמידים לפני מחיקה.
+| קובץ | תפקיד |
+|------|--------|
+| **`EducationPlaceRepository.cs`** | Dapper + SP/שאילתות לפנימיות: אגרגציות, ספירות, עדכון סטטוס. |
+| **`StudentRepository.cs`** | Dapper: פילטרים, CRUD, upsert, בדיקות ייחודיות ברמת SQL. |
 
 ### שורש ה-backend
 
-- **`Dockerfile`** — multi-stage build, פרסום Release, הרצה על פורט 8080.
+| קובץ | תפקיד |
+|------|--------|
+| **`Dockerfile`** | שלב build עם SDK, שלב ריצה עם aspnet בלבד; חשיפת 8080 ל-Docker Compose. |
+| **`EducationSystem.sln` / `.slnx`** | איחוד פרויקטים לפתרון אחד ל-build ול-IDE. |
+| **`API-README.md`** | רפרנס REST מפורט נפרד מהמסמך הזה (נוח לצוות ולמגייסים). |
+| **`README.md`** | מסמך זה — עץ תיקיות והסבר תפקידים. |
+| **`.gitignore`** | מונע דחיפת bin/obj וקבצי build ל-repository. |
 
 ---
 

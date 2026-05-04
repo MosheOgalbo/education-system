@@ -4,110 +4,117 @@
 
 ---
 
-## עץ הפרויקט — כל הקבצים
+## עץ הפרויקט — מבנה תיקיות וקבצים (מעודכן)
+
+הסבר קצר בעברית ליד כל פריט: **מה התפקיד בפרויקט**.
 
 ```
 edu-management/
-├── .dockerignore              # קבצים/תיקיות שלא נכנסים להקשר Docker build
-├── .editorconfig              # כללי קידוד אחידים (indent, charset) לעורכים
-├── .gitignore                 # מה לא נשמר ב-Git (node_modules, dist, וכו')
-├── .prettierrc                # עיצוב קוד אוטומטי (Prettier)
-├── angular.json               # הגדרות Angular CLI: פרויקט, build, serve, proxyConfig
-├── Dockerfile                 # בניית אפליקציה סטטית + שרת nginx לפרודקשן
-├── package.json               # תלויות npm וסקריפטים (ng serve, build, test)
-├── package-lock.json          # נעילת גרסאות תלויות מדויקות
-├── proxy.conf.cjs             # בפיתוח: מפנה בקשות `/api` לכתובת הבקאנד
-├── README.md                  # תיעוד זה
-├── tsconfig.json              # הגדרות TypeScript בסיסיות לכל ה-workspace
-├── tsconfig.app.json          # TS רק לאפליקציה (src) — נכלל ב-build
-├── tsconfig.spec.json         # TS לבדיקות (Vitest / spec)
+├── .dockerignore                    # קבצים שלא נכללים בהקשר build של Docker (מקצר זמן וגודל אימג').
+├── .editorconfig                    # כללי עורך משותפים: ריווח, סוף שורה, charset — עקביות בין מפתחים.
+├── .gitignore                       # רשימת קבצים/תיקיות שלא נדחפים ל-Git (build, node_modules).
+├── .prettierrc                      # הגדרות Prettier לפורמט קוד אוטומטי.
+├── .vscode/                         # הגדרות IDE לצוות: הרצה, משימות, הרחבות מומלצות.
+│   ├── extensions.json              # רשימת הרחבות מומלצות לפרויקט Angular.
+│   ├── launch.json                  # פרופילי דיבוג (Chrome וכו').
+│   ├── mcp.json                     # הגדרות MCP לכלי עזר ב-Cursor/VS Code (אופציונלי).
+│   └── tasks.json                   # משימות מוכנות (build, serve).
+├── angular.json                     # לב Angular CLI: שם פרויקט, build, serve, קובץ proxy, נכסים.
+├── Dockerfile                       # בניית האפליקציה ל-static + שלב nginx להגשת קבצים ו-proxy ל-API.
+├── package.json                     # תלויות npm וסקריפטים (ng serve, build, test, lint).
+├── package-lock.json                # נעילת גרסאות מדויקת ל-reproducible installs.
+├── proxy.conf.cjs                   # בפיתוח: ניתוב `/api` מהדפדפן לשרת הבקאנד (עוקף CORS מקומית).
+├── README.md                        # תיעוד זה — מבנה, הרצה, ארכיטקטורה.
+├── tsconfig.json                    # בסיס TypeScript לכל ה-workspace (paths, strict וכו').
+├── tsconfig.app.json                # הגדרות TS רק לקוד האפליקציה תחת `src/` (נכלל ב-build).
+├── tsconfig.spec.json               # הגדרות TS לבדיקות יחידה.
 │
 ├── nginx/
-│   └── default.conf           # קונפיגורציית nginx: קבצים סטטיים + proxy ל־`/api`
+│   └── default.conf                 # nginx: הגשת `dist`, proxy ל-`/api` לקונטיינר ה-API בפריסה.
 │
 ├── public/
-│   └── favicon.ico            # אייקון לשונית הדפדפן
+│   └── favicon.ico                  # אייקון כרטיסייה בדפדפן.
 │
 └── src/
-    ├── index.html             # HTML ראשי — טעינת האפליקציה, base href
-    ├── main.ts                # נקודת כניסה: bootstrapApplication(AppComponent, appConfig)
-    ├── styles.scss            # ייבוא גלובלי של תמה, טוקנים וטיפוגרפיה
+    ├── index.html                   # דף HTML יחיד של ה-SPA — טעינת הסקריפטים וה-base href.
+    ├── main.ts                      # נקודת כניסה: `bootstrapApplication` עם AppComponent ו-appConfig.
+    ├── styles.scss                  # ייבוא גלובלי של partials — נקודת כניסה לסגנון כל האפליקציה.
     │
-    ├── styles/                # שכבת עיצוב מפורקת (partial SCSS)
-    │   ├── _gov-tokens.scss   # משתני צבע/ריווח/טיפוגרפיה בסגנון «ממשל» (design tokens)
-    │   ├── _theme.scss        # חיבור ל-Material / משתני תמה
-    │   ├── _typography.scss   # כללי גופנים וגדלים
-    │   └── _utilities.scss    # עזרי layout / utility classes
+    ├── styles/                      # עיצוב מפוצל — שינוי תמה/טוקנים מרוכז.
+    │   ├── _gov-tokens.scss         # משתני עיצוב (צבעים, ריווח, טיפוגרפיה) בסגנון «ממשלי».
+    │   ├── _theme.scss              # חיבור ל-Material theme ומשתני תמה.
+    │   ├── _typography.scss         # כללי גופנים וגדלי טקסט.
+    │   └── _utilities.scss          # מחלקות עזר ל-layout וכיווניות.
     │
     └── app/
-        ├── app.component.ts       # רכיב שורש: סרגל עליון, ניווט, router-outlet
-        ├── app.component.scss     # סגנונות סרגל ומעטפת הדף
-        ├── app.config.ts          # רישום providers: Router, HttpClient, locale עברית, Material
-        ├── app.routes.ts          # נתיבי האפליקציה + lazy loading לפיצ'רים
-        ├── app.spec.ts            # בדיקת יחידה בסיסית ל-AppComponent
+        ├── app.component.ts         # רכיב שורש: סרגל עליון, ניווט, `<router-outlet>` ושכבת פידבק גלובלית.
+        ├── app.component.scss       # סגנונות המעטפת והסרגל.
+        ├── app.config.ts            # רישום גלובלי: עברית, Router, HttpClient+interceptors, Material, אנימציות.
+        ├── app.routes.ts            # טבלת נתיבים + lazy loading לפיצ'רים + הפניות ברירת מחדל.
+        ├── app.spec.ts              # בדיקת עשן: האפליקציה נטענת.
         │
-        ├── core/                  # תשתית אפליקציה — לא תלוי בפיצ'ר ספציפי
+        ├── core/                    # תשתית «חיוּת האפליקציה» — חד-פעמי, לא דומיין ספציפי.
         │   ├── config/
-        │   │   └── api.config.ts           # InjectionToken: baseUrl `/api`, timeout
+        │   │   └── api.config.ts              # InjectionToken: בסיס URL ל-API ו-timeout.
         │   ├── interceptors/
-        │   │   ├── api-base-url.interceptor.ts   # קידומת כתובת לכל בקשה יחסית
-        │   │   └── error-handler.interceptor.ts  # מיפוי שגיאות + טוסט (לא על GET)
+        │   │   ├── api-base-url.interceptor.ts    # מצרף baseUrl לכל בקשה יחסית ל-API.
+        │   │   └── error-handler.interceptor.ts   # מיפוי שגיאות HTTP + טוסטים (לא על GET כדי לא לכפול UI).
         │   ├── models/
-        │   │   ├── api-error.model.ts        # ApiError, AsyncState, מצבי טעינה
-        │   │   ├── education-place.model.ts  # ממשקי DTO לפנימיות (מול ה-API)
-        │   │   └── student.model.ts          # ממשקי DTO לתלמידים
+        │   │   ├── api-error.model.ts           # טיפוסי שגיאה ומצבי async משותפים.
+        │   │   ├── education-place.model.ts      # ממשקים התואמים ל-DTO של פנימיות מהשרת.
+        │   │   └── student.model.ts              # ממשקים התואמים ל-DTO של תלמידים מהשרת.
         │   ├── services/
-        │   │   └── toast.service.ts          # עטיפה ל-MatSnackBar (הצלחה/שגיאה/מידע)
+        │   │   ├── toast.service.ts              # עטיפה ל-MatSnackBar — הודעות קצרות (שגיאה בפעולות שינוי).
+        │   │   └── operation-feedback.service.ts # פידבק מלא-מסך אחרי פעולה (הצלחה/שגיאה) דרך overlay.
+        │   ├── validators/
+        │   │   └── business-input.validators.ts # ולידטורים לטפסים — התאמה לכללי הבקאנד (שם, ת״ז).
         │   └── utils/
-        │       └── http-error.mapper.ts      # toApiError, הודעות ידידותיות, כותרות מסך שגיאה
+        │       └── http-error.mapper.ts          # המרת HttpErrorResponse ל-ApiError והודעות בעברית.
         │
-        ├── features/
+        ├── features/                # פיצ'רים לפי דומיין — כל אחד עם routes, store, רכיבים.
         │   │
-        │   ├── education-places/             # פיצ'ר: רשימת פנימיות, סינון, יצירה, מחיקה, פעילות
-        │   │   ├── education-places.routes.ts
+        │   ├── education-places/    # ניהול רשימת פנימיות: טעינה, סינון, CRUD, סטטוס פעילות.
+        │   │   ├── education-places.routes.ts     # הגדרת נתיב ה-feature ו-load של רכיב הדף.
+        │   │   ├── models/
+        │   │   │   └── education-places-filter.model.ts  # מודל מצב סינון (עיר, טקסט חופשי וכו').
         │   │   ├── services/
-        │   │   │   └── education-places.service.ts   # HttpClient ל-EducationPlaces + *Async
+        │   │   │   └── education-places.service.ts       # קריאות HTTP ל-endpoints של EducationPlaces.
         │   │   ├── store/
-        │   │   │   └── education-places.store.ts     # Signals: טעינה, סינון, פעולות CRUD
+        │   │   │   └── education-places.store.ts         # Signals: רשימה, סינון לקוח, פעולות ומצבי טעינה.
         │   │   └── components/
-        │   │       ├── education-places-page/
-        │   │       │   ├── education-places-page.component.ts    # לוגיקת דף: טבלה/כרטיסים, דיאלוגים
-        │   │       │   ├── education-places-page.component.html  # תבנית: מצבי טעינה/שגיאה/ריק
-        │   │       │   └── education-places-page.component.scss  # עיצוב דף פנימיות
-        │   │       ├── education-place-form-dialog/
-        │   │       │   └── education-place-form-dialog.component.ts  # דיאלוג: טופס יצירת פנימייה (inline template)
-        │   │       └── education-place-stats-card/
-        │   │           └── education-place-stats-card.component.ts   # כרטיס סטטיסטיקה (מובייל)
+        │   │       ├── education-places-page/            # דף ראשי: טבלה/כרטיסים, מצבי ריק/שגיאה.
+        │   │       │   ├── education-places-page.component.ts
+        │   │       │   ├── education-places-page.component.html
+        │   │       │   └── education-places-page.component.scss
+        │   │       ├── education-place-form-dialog/        # דיאלוג יצירת פנימייה חדשה.
+        │   │       ├── education-places-filter-dialog/     # דיאלוג סינון מתקדם לרשימת הפנימיות.
+        │   │       └── education-place-stats-card/       # כרטיס סטטיסטיקה (בעיקר תצוגת מובייל).
         │   │
-        │   └── students/                     # פיצ'ר: תלמידים לפי פנימייה
-        │       ├── students.routes.ts        # נתיב ריק → StudentsPageComponent
+        │   └── students/          # תלמידים במסגרת פנימייה נבחרת (מזהה מה-route).
+        │       ├── students.routes.ts                      # ניתוב לדף התלמידים תחת `education-places/:id/students`.
+        │       ├── models/
+        │       │   └── students-list-filter.model.ts     # פרמטרי סינון לרשימת התלמידים בדף.
         │       ├── services/
-        │       │   └── students.service.ts   # HttpClient ל-Students (כולל upsert) + *Async
+        │       │   └── students.service.ts               # HTTP ל-Students כולל upsert לפי הצורך.
         │       ├── store/
-        │       │   └── students.store.ts     # Signals: טעינה לפי placeId, סינון פעיל, CRUD
+        │       │   └── students.store.ts                 # Signals: טעינה לפי placeId, פילטרים, CRUD.
         │       └── components/
-        │           ├── students-page/
-        │           │   ├── students-page.component.ts     # דף: route param, טבלה, דיאלוגים
-        │           │   ├── students-page.component.html
-        │           │   └── students-page.component.scss
-        │           └── student-form-dialog/
-        │               └── student-form-dialog.component.ts  # דיאלוג יצירה/עריכת תלמיד
+        │           ├── students-page/                    # דף רשימת תלמידים + כותרת פנימייה.
+        │           ├── student-form-dialog/               # טופס יצירה/עריכת תלמיד.
+        │           ├── students-filter-dialog/           # דיאלוג סינון תלמידים (פעילות וכו').
+        │           └── student-transfer-dialog/          # דיאלוג להעברת תלמיד לפנימייה אחרת מהדף.
         │
-        └── shared/                    # קומפוננטות וצינורות לשימוש חוזר
+        └── shared/                # רכיבים גנריים ללא לוגיקת דומיין — שימוש חוזר בין פיצ'רים.
             ├── components/
-            │   ├── generic-table/
-            │   │   ├── generic-table.component.ts   # טבלת Material גנרית: מיון, פעולות, OnPush
-            │   │   └── generic-table.types.ts       # ColumnDef, TableAction, SortState
-            │   ├── autocomplete-input/
-            │   │   └── autocomplete-input.component.ts  # חיפוש/סינון עם autocomplete + CVA
-            │   ├── empty-state/
-            │   │   └── empty-state.component.ts     # מסך «אין נתונים» עם אייקון וכפתור
-            │   ├── error-state/
-            │   │   └── error-state.component.ts     # מסך שגיאה + ניסיון חוזר
-            │   └── loading-skeleton/
-            │       └── loading-skeleton.component.ts  # שלד טעינה (placeholder)
+            │   ├── generic-table/           # טבלה גנרית עם מיון ופעולות שורה.
+            │   ├── autocomplete-input/      # שדה עם השלמה והשהיה — סינון טקסט.
+            │   ├── confirm-dialog/          # דיאלוג אישור מחיקה/פעולה הרסנית.
+            │   ├── empty-state/             # מצב «אין נתונים».
+            │   ├── error-state/             # מצב שגיאה עם «נסה שוב».
+            │   ├── loading-skeleton/        # שלד טעינה.
+            │   └── operation-feedback-overlay/  # Overlay גלובלי לפידבק פעולה (מחובר ל-operation-feedback.service).
             └── pipes/
-                └── default-value.pipe.ts        # הצגת ערך ברירת מחדל (למשל «—») ל-null/rיק
+                └── default-value.pipe.ts    # תצוגת placeholder לערכים ריקים (למשל «—»).
 ```
 
 ---
@@ -166,45 +173,54 @@ edu-management/
 
 ### Core
 
-| קובץ | תפקיד |
-|------|--------|
-| `api.config.ts` | `InjectionToken` לכתובת ה-API. |
-| `api-base-url.interceptor.ts` | צירוף `baseUrl` לנתיבים יחסיים. |
-| `error-handler.interceptor.ts` | טיפול בשגיאות HTTP + טוסטים סלקטיביים. |
-| `http-error.mapper.ts` | המרת `HttpErrorResponse` ל־`ApiError` + טקסטים בעברית. |
-| `api-error.model.ts` | טיפוסים למצב אסינכרוני ושגיאות. |
-| `education-place.model.ts` / `student.model.ts` | התאמה ל-DTOs של השרת. |
-| `toast.service.ts` | הודעות קצרות למשתמש. |
+| קובץ / תיקייה | תפקיד |
+|---------------|--------|
+| `config/api.config.ts` | `InjectionToken` לכתובת בסיס ה-API ו-timeout — מקור אחד לכל השירותים. |
+| `interceptors/api-base-url.interceptor.ts` | מצרף `baseUrl` לכל בקשה יחסית; כתובות מוחלטות נשמרות. |
+| `interceptors/error-handler.interceptor.ts` | מיפוי שגיאות ל-`ApiError`, טוסט על פעולות שינוי בלבד (לא GET). |
+| `utils/http-error.mapper.ts` | תרגום `HttpErrorResponse` להודעות בעברית ומבנה אחיד לרכיבים. |
+| `models/api-error.model.ts` | טיפוסים למצבי טעינה/שגיאה ושגיאות API. |
+| `models/education-place.model.ts` / `student.model.ts` | התאמה ל-DTO של הבקאנד בצד הלקוח. |
+| `services/toast.service.ts` | הודעות קצרות (SnackBar) לשגיאות ופידבק מהיר. |
+| `services/operation-feedback.service.ts` | מצב גלובלי להודעות הצלחה/כישלון ארוכות יותר ב-overlay. |
+| `validators/business-input.validators.ts` | ולידציה בטפסים שמיושרת עם חוקי הבקאנד (שם, ת״ז ישראלית). |
 
 ### פיצ'ר פנימיות
 
-| קובץ | תפקיד |
-|------|--------|
-| `education-places.routes.ts` | `loadComponent` לדף הפנימיות. |
-| `education-places.service.ts` | קריאות REST ל-`EducationPlaces`. |
-| `education-places.store.ts` | מצב רשימה, סינון, יצירה, מחיקה, שינוי פעילות. |
-| `education-places-page.*` | UI מלא: טבלה/מובייל, פילטרים, דיאלוג. |
-| `education-place-form-dialog.component.ts` | טופס הוספת פנימייה. |
-| `education-place-stats-card.component.ts` | תצוגת כרטיס לנתוני סטטיסטיקה. |
+| קובץ / תיקייה | תפקיד |
+|---------------|--------|
+| `education-places.routes.ts` | רישום הנתיב והטעינה העצלה של דף הפנימיות. |
+| `models/education-places-filter.model.ts` | מבנה נתונים למצב הסינון (שדות בדיאלוג / שורת חיפוש). |
+| `services/education-places.service.ts` | קריאות REST ל-`/api/EducationPlaces`. |
+| `store/education-places.store.ts` | Signals: רשימה, סינון לקוח, יצירה/מחיקה/שינוי פעילות, מניעת race בטעינה. |
+| `education-places-page.*` | דף ראשי: טבלה וכרטיסים, חיבור ל-store ולדיאלוגים. |
+| `education-place-form-dialog` | דיאלוג יצירת פנימייה חדשה. |
+| `education-places-filter-dialog` | דיאלוג סינון מתקדם (עיר ופרמטרים נוספים לפי המימוש). |
+| `education-place-stats-card` | תצוגת סיכום סטטיסטיקה לפריט (למשל במובייל). |
 
 ### פיצ'ר תלמידים
 
-| קובץ | תפקיד |
-|------|--------|
-| `students.routes.ts` | ניתוב לרכיב דף התלמידים. |
-| `students.service.ts` | REST ל-`Students` כולל `upsert` אם נדרש. |
-| `students.store.ts` | טעינה לפי `educationPlaceId`, סינון פעיל, CRUD. |
-| `students-page.*` | רשימת תלמידים, כותרת עם שם פנימייה, דיאלוגים. |
-| `student-form-dialog.component.ts` | טופס תלמיד (יצירה/עריכה). |
+| קובץ / תיקייה | תפקיד |
+|---------------|--------|
+| `students.routes.ts` | ניתוב תחת `education-places/:id/students`. |
+| `models/students-list-filter.model.ts` | פרמטרים לסינון רשימת התלמידים בדף. |
+| `services/students.service.ts` | REST ל-`/api/Students` כולל upsert כשנדרש. |
+| `store/students.store.ts` | Signals: טעינה לפי מזהה פנימייה, פילטרים, CRUD. |
+| `students-page.*` | דף רשימת תלמידים, כותרת עם שם הפנימייה, חיבור לטבלה ודיאלוגים. |
+| `student-form-dialog` | טופס יצירה או עריכת תלמיד. |
+| `students-filter-dialog` | דיאלוג לסינון תלמידים (למשל לפי פעילות). |
+| `student-transfer-dialog` | דיאלוג להעברת תלמיד בין פנימיות (שימוש בזרימת UI הרלוונטית). |
 
 ### Shared
 
-| קובץ | תפקיד |
-|------|--------|
-| `generic-table.*` | טבלה גנרית עם מיון ופעולות. |
-| `autocomplete-input.component.ts` | שדה חיפוש/בחירה עם השהיה. |
-| `loading-skeleton` / `empty-state` / `error-state` | מצבי UI סטנדרטיים. |
-| `default-value.pipe.ts` | תצוגה נקייה של ערכים חסרים. |
+| קובץ / תיקייה | תפקיד |
+|---------------|--------|
+| `generic-table.*` | טבלה גנרית: עמודות, מיון, פעולות שורה — ללא ידע ספציפי על פנימיות/תלמידים. |
+| `autocomplete-input` | קלט עם השלמה והשהיה — מתאים לסינון טקסט חופשי. |
+| `confirm-dialog` | אישור פעולות הרסניות לפני קריאה לשרת. |
+| `loading-skeleton` / `empty-state` / `error-state` | מצבי UX עקביים לטעינה, ריק ושגיאה. |
+| `operation-feedback-overlay` | תצוגת overlay גלובלית המחוברת ל-`OperationFeedbackService`. |
+| `default-value.pipe.ts` | הצגת טקסט חלופי לערכי null/ריק בטבלאות וכרטיסים. |
 
 ---
 

@@ -1,5 +1,7 @@
 /**
  * רכיב שורש: סרגל עליון (ממשק בעברית) ואזור תוכן עם router-outlet.
+ *
+ * standalone: true — ללא NgModule מעטפת; ייבוא מפורש של Router ו-Material לפי הצורך (כיוון Angular המודרני).
  */
 import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
