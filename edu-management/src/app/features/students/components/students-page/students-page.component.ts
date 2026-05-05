@@ -2,7 +2,8 @@
  * דף רשימת תלמידים למוסד שנבחר ב-route (`:id`). שם הפנימייה נטען בנפרד לכותרת.
  * טבלה עם תפריט פעולות (כמו בדף הפנימיות) לעריכה/העברה/מחיקה.
  */
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -59,9 +60,10 @@ import { ToastService } from '../../../../core/services/toast.service';
   templateUrl: './students-page.component.html',
   styleUrl: './students-page.component.scss',
 })
-export class StudentsPageComponent implements OnInit {
+export class StudentsPageComponent {
   protected readonly store = inject(StudentsStore);
   private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
   private readonly placesService = inject(EducationPlacesService);
@@ -114,16 +116,17 @@ export class StudentsPageComponent implements OnInit {
     },
   ];
 
-  /** קורא מזהה פנימייה מה-route; אם לא תקין — חזרה לרשימת הפנימיות. */
-  ngOnInit(): void {
-    const id = Number(this.route.snapshot.paramMap.get('id'));
-    if (!Number.isFinite(id) || id <= 0) {
-      void this.router.navigate(['/education-places']);
-      return;
-    }
-    this.educationPlaceId.set(id);
-    this.store.load(id);
-    void this.loadPlaceName(id);
+  constructor() {
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      const id = Number(params.get('id'));
+      if (!Number.isFinite(id) || id <= 0) {
+        void this.router.navigate(['/education-places']);
+        return;
+      }
+      this.educationPlaceId.set(id);
+      this.store.load(id);
+      void this.loadPlaceName(id);
+    });
   }
 
   /** טוען שם פנימייה לכותרת (לא חובה להצלחת רשימת התלמידים). */

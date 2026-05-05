@@ -100,8 +100,12 @@ export class StudentsStore {
   private readonly isSaving = signal(false);
   readonly saving = this.isSaving.asReadonly();
 
-  /** טוען תלמידים לפי מזהה פנימייה. */
+  /** טוען תלמידים לפי מזהה פנימייה. מנקה מסנני רשימה כשעוברים לפנימייה אחרת (מונע מצג שווא / ריק שגוי). */
   load(educationPlaceId: number): void {
+    const previous = this._educationPlaceId();
+    if (previous !== null && previous !== educationPlaceId) {
+      this.clearListFilters();
+    }
     void this.performLoad(educationPlaceId);
   }
 

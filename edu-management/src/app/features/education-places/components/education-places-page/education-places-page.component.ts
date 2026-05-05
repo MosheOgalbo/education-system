@@ -142,6 +142,7 @@ export class EducationPlacesPageComponent {
         row.status === 'inactive'
           ? 'הפעלה מחדש (פעילה או השהייה אם אין תלמידים)'
           : 'מעבר ל«לא פעילה» (נדרש לפני מחיקה)',
+      tooltipFn: (row) => this.togglePlaceTooltip(row),
       handler: (row) => this.togglePlaceActive(row),
     },
     {
@@ -171,10 +172,22 @@ export class EducationPlacesPageComponent {
     void this.router.navigate(['/education-places', row.id, 'students']);
   }
 
+  /** הסבר לפעולת המתג — כולל חסימה כשיש תלמידים ומעבר ל«לא פעילה». */
+  protected togglePlaceTooltip(row: EducationPlaceStatsDto): string {
+    const n = Number(row.totalStudentCount);
+    if (row.status !== 'inactive' && n > 0) {
+      return 'לא ניתן להעביר ל«לא פעילה» כל עוד יש תלמידים משויכים — העבירו או הסירו תלמידים תחילה.';
+    }
+    return row.status === 'inactive'
+      ? 'הפעלה מחדש — פעילה או בהשהייה אם אין תלמידים'
+      : 'מעבר ל«לא פעילה» (נדרש לפני מחיקה)';
+  }
+
   /** מעבר לפעילה (או השהייה) / ללא פעילה — לפי סטטוס נוכחי. */
   protected togglePlaceActive(row: EducationPlaceStatsDto): void {
     const wantActive = row.status === 'inactive';
-    if (!wantActive && row.totalStudentCount > 0) {
+    const total = Number(row.totalStudentCount);
+    if (!wantActive && total > 0) {
       this.toast.error(
         'לא ניתן להעביר פנימייה למצב «לא פעילה» כל עוד קיימים תלמידים משויכים לה. יש להעביר או להסיר את התלמידים תחילה.',
       );
