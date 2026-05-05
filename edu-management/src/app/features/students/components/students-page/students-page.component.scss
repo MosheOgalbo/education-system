@@ -39,17 +39,36 @@
       font-size: 1.05rem;
     }
   }
+}
 
-  &__notice {
-    margin: 10px 0 0;
-    padding: 10px 12px;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    line-height: 1.45;
-    color: #5f6368;
-    background: rgba(95, 99, 104, 0.1);
-    border: 1px solid rgba(95, 99, 104, 0.25);
-  }
+/** פס אזהרה אדום מעל הטבלה / אזור הרשימה — למה לא ניתן להוסיף תלמיד */
+.students-table-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(183, 28, 28, 0.45);
+  border-inline-start: 4px solid #b71c1c;
+  background: rgba(183, 28, 28, 0.08);
+  box-shadow: 0 1px 3px rgba(183, 28, 28, 0.12);
+}
+
+.students-table-alert__icon {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  font-size: 28px;
+  color: #b71c1c;
+  margin-top: 2px;
+}
+
+.students-table-alert__text {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.5;
+  color: #8b1010;
 }
 
 .back-nav {

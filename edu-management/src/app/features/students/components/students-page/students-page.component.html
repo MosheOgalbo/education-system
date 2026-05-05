@@ -20,11 +20,6 @@
             {{ store.activeCount() }} פעילים · {{ store.inactiveCount() }} בהשהייה
           </p>
         }
-        @if (placeStatus() === 'inactive') {
-          <p class="page-header__notice" role="status">
-            פנימייה במצב «לא פעילה» — לא ניתן לשבץ תלמידים חדשים עד להפעלה מחדש.
-          </p>
-        }
       </div>
     </div>
 
@@ -83,6 +78,15 @@
     </div>
   }
 
+  @if (placeStatus() === 'inactive' && !store.isLoading() && !store.isError()) {
+    <div class="students-table-alert gov-surface" role="alert">
+      <mat-icon class="students-table-alert__icon" aria-hidden="true">block</mat-icon>
+      <p class="students-table-alert__text">
+        פנימייה במצב «לא פעילה» — לא ניתן לשבץ תלמידים חדשים עד להפעלה מחדש.
+      </p>
+    </div>
+  }
+
   @if (store.isLoading()) {
     <app-loading-skeleton [rows]="5" />
   } @else if (store.isError()) {
@@ -96,13 +100,23 @@
       (action)="clearStudentFilters()"
     />
   } @else if (store.filteredStudents().length === 0) {
-    <app-empty-state
-      icon="person_off"
-      title="אין תלמידים בפנימייה"
-      description="הוסיפו תלמיד או חזרו לרשימת הפנימיות."
-      actionLabel="חזרה לרשימת הפנימיות"
-      (action)="goBack()"
-    />
+    @if (placeStatus() === 'inactive') {
+      <app-empty-state
+        icon="block"
+        title="אין תלמידים בפנימייה"
+        description="הרשימה ריקה כי הפנימייה במצב «לא פעילה» — לא ניתן לשבץ תלמידים חדשים במצב זה. יש להפעיל את הפנימייה מרשימת הפנימיות, ואז ניתן יהיה לשבץ תלמידים."
+        actionLabel="חזרה לרשימת הפנימיות"
+        (action)="goBack()"
+      />
+    } @else {
+      <app-empty-state
+        icon="person_off"
+        title="אין תלמידים בפנימייה"
+        description="הוסיפו תלמיד או חזרו לרשימת הפנימיות."
+        actionLabel="חזרה לרשימת הפנימיות"
+        (action)="goBack()"
+      />
+    }
   } @else {
     <app-generic-table
       [columns]="columns"
