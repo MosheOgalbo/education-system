@@ -36,15 +36,17 @@ body {
   color: #2e7d32;
   font-weight: 600;
 }
+/* לא פעילה — אדום */
 .status--inactive {
   color: #c62828;
   font-weight: 600;
 }
 
+/* בהשהייה — צהוב */
 .status--suspended {
   color: #f57f17;
-  font-weight: 700;
-  background: rgba(255, 213, 79, 0.35);
+  font-weight: 600;
+  background: rgba(255, 235, 59, 0.55);
   padding: 2px 8px;
   border-radius: 6px;
 }

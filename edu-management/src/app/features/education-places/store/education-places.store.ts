@@ -282,15 +282,17 @@ export class EducationPlacesStore {
   async setPlaceActive(id: number, wantActive: boolean): Promise<void> {
     this._saving.set(true);
     try {
-      const updated = await this.service.setActiveAsync(id, wantActive);
+      await this.service.setActiveAsync(id, wantActive);
+      // טעינה מחודשת של השורה עם סטטיסטיקה — תואם ל-GET; מונע חוסר עדכון בטבלה / סטטוס לא ממופה מ-PATCH.
+      const fresh = await this.service.getByIdAsync(id);
       this._state.update((s) => ({
         ...s,
-        data: s.data.map((p) => (p.id === id ? { ...p, status: updated.status } : p)),
+        data: s.data.map((p) => (p.id === id ? fresh : p)),
       }));
 
       if (wantActive) {
         this.toast.success(
-          updated.status === 'suspended'
+          fresh.status === 'suspended'
             ? 'הפנימייה במצב השהייה — אין תלמידים משויכים. ניתן לשבץ תלמידים; עם שיבוץ הסטטוס יעבור לפעילה.'
             : 'הפנימייה סומנה כפעילה.',
         );

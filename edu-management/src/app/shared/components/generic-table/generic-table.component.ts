@@ -148,7 +148,7 @@ import { ColumnDef, TableAction, SortState } from './generic-table.types';
         <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
         <tr
           mat-row
-          *matRowDef="let row; columns: displayedColumns()"
+          *matRowDef="let row; columns: displayedColumns(); trackBy: trackRowBy"
           class="data-row"
           [class.data-row--clickable]="rowClickable()"
           [ngClass]="rowClassFn() ? rowClassFn()!(row) : ''"
@@ -373,6 +373,13 @@ export class GenericTableComponent<T extends object> {
   protected invokeAction(action: TableAction<T>, row: T): void {
     action.handler(row);
   }
+
+  /** מזהה יציב לשורה — חובה לעדכון תאים אחרי שינוי שדות באובייקט שורה (למשל סטטוס). */
+  protected readonly trackRowBy = (index: number, row: T): unknown => {
+    const key = this.trackByKey();
+    const id = this.getNestedValue(row, key);
+    return id !== undefined && id !== null ? id : index;
+  };
 
   /** עדכון מצב מיון מ-MatSort. */
   protected onSort(sort: Sort): void {

@@ -192,14 +192,16 @@
   background: rgba(46, 125, 50, 0.12);
   color: #2e7d32;
 
+  /* לא פעילה — אדום */
   &--off {
-    background: rgba(198, 40, 40, 0.1);
+    background: rgba(198, 40, 40, 0.12);
     color: #c62828;
   }
 
+  /* בהשהייה — צהוב */
   &--hold {
-    background: rgba(245, 124, 0, 0.14);
-    color: #e65100;
+    background: rgba(255, 235, 59, 0.45);
+    color: #f57f17;
   }
 }
 
