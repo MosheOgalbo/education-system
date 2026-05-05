@@ -2,7 +2,7 @@
  * דף רשימת תלמידים למוסד שנבחר ב-route (`:id`). שם הפנימייה נטען בנפרד לכותרת.
  * טבלה עם תפריט פעולות (כמו בדף הפנימיות) לעריכה/העברה/מחיקה.
  */
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -38,6 +38,11 @@ import {
   StudentsFilterTabId,
   StudentsListFilters,
 } from '../../models/students-list-filter.model';
+import {
+  educationPlaceAcceptsEnrollment,
+  type EducationPlaceStatus,
+} from '../../../../core/models/education-place.model';
+import { ToastService } from '../../../../core/services/toast.service';
 @Component({
   selector: 'app-students-page',
   standalone: true,
@@ -60,9 +65,17 @@ export class StudentsPageComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
   private readonly placesService = inject(EducationPlacesService);
+  private readonly toast = inject(ToastService);
 
   protected readonly educationPlaceId = signal<number>(0);
   protected readonly placeName = signal<string | null>(null);
+  /** סטטוס הפנימייה מהשרת — לחסימת שיבוץ כש«לא פעילה». */
+  protected readonly placeStatus = signal<EducationPlaceStatus | null>(null);
+
+  /** רק פעילה / בהשהייה מקבלות תלמידים חדשים (תואם EnsurePlaceAcceptsEnrollment בבקאנד). */
+  protected readonly canAddStudents = computed(() =>
+    educationPlaceAcceptsEnrollment(this.placeStatus()),
+  );
 
   /** עמודות טבלת תלמידים. */
   protected readonly columns: ColumnDef<StudentDto>[] = [
@@ -118,13 +131,21 @@ export class StudentsPageComponent implements OnInit {
     try {
       const place = await this.placesService.getByIdAsync(educationPlaceId);
       this.placeName.set(place.name);
+      this.placeStatus.set(place.status);
     } catch {
       this.placeName.set(null);
+      this.placeStatus.set(null);
     }
   }
 
   /** פותח דיאלוג הוספת תלמיד. */
   protected openCreateDialog(): void {
+    if (!this.canAddStudents()) {
+      this.toast.error(
+        'לא ניתן לשבץ תלמידים לפנימייה במצב «לא פעילה». הפעילו את הפנימייה או בחרו פנימייה במצב פעילה או בהשהייה.',
+      );
+      return;
+    }
     const ref = this.dialog.open<StudentFormDialogComponent, StudentDialogData>(
       StudentFormDialogComponent,
       {

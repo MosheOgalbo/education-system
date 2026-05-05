@@ -39,6 +39,17 @@
       font-size: 1.05rem;
     }
   }
+
+  &__notice {
+    margin: 10px 0 0;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    color: #5f6368;
+    background: rgba(95, 99, 104, 0.1);
+    border: 1px solid rgba(95, 99, 104, 0.25);
+  }
 }
 
 .back-nav {

@@ -16,7 +16,10 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 
 import { EducationPlacesService } from '../../../education-places/services/education-places.service';
-import type { EducationPlaceStatsDto } from '../../../../core/models/education-place.model';
+import {
+  educationPlaceAcceptsEnrollment,
+  type EducationPlaceStatsDto,
+} from '../../../../core/models/education-place.model';
 import type { StudentDto } from '../../../../core/models/student.model';
 
 export interface StudentTransferDialogData {
@@ -108,8 +111,7 @@ export class StudentTransferDialogComponent implements OnInit {
   protected readonly eligiblePlaces = computed(() =>
     this.places().filter(
       (p) =>
-        p.id !== this.data.currentEducationPlaceId &&
-        (p.status === 'active' || p.status === 'suspended'),
+        p.id !== this.data.currentEducationPlaceId && educationPlaceAcceptsEnrollment(p.status),
     ),
   );
 
@@ -135,6 +137,10 @@ export class StudentTransferDialogComponent implements OnInit {
     if (id == null || this.placeIdCtrl.invalid) return;
     const placeId = typeof id === 'number' ? id : Number(id);
     if (!Number.isFinite(placeId) || placeId <= 0) return;
+    const picked = this.places().find((p) => p.id === placeId);
+    if (!picked || !educationPlaceAcceptsEnrollment(picked.status)) {
+      return;
+    }
     this.dialogRef.close(placeId);
   }
 

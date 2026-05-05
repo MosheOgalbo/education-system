@@ -20,6 +20,11 @@
             {{ store.activeCount() }} פעילים · {{ store.inactiveCount() }} בהשהייה
           </p>
         }
+        @if (placeStatus() === 'inactive') {
+          <p class="page-header__notice" role="status">
+            פנימייה במצב «לא פעילה» — לא ניתן לשבץ תלמידים חדשים עד להפעלה מחדש.
+          </p>
+        }
       </div>
     </div>
 
@@ -27,7 +32,12 @@
       mat-raised-button
       color="primary"
       type="button"
-      [disabled]="store.isLoading() || store.saving()"
+      [disabled]="store.isLoading() || store.saving() || !canAddStudents()"
+      [matTooltip]="
+        !canAddStudents()
+          ? 'לא ניתן לשבץ תלמידים לפנימייה במצב «לא פעילה».'
+          : ''
+      "
       (click)="openCreateDialog()"
     >
       <mat-icon>person_add</mat-icon>

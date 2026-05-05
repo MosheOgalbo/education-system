@@ -27,6 +27,23 @@ export function educationPlaceDataRowClass(status: EducationPlaceStatus): string
   return '';
 }
 
+/**
+ * האם ניתן לשבץ או להעביר תלמיד לפנימייה — רק «פעילה» או «בהשהייה» (כמו בבקאנד).
+ * תומך גם במספרי enum (0/1/2) אם הגיעו מהרשת בפורמט לא צפוי.
+ */
+export function educationPlaceAcceptsEnrollment(status: unknown): boolean {
+  if (status === 'active' || status === 'suspended') return true;
+  if (status === null || status === undefined) return false;
+  if (typeof status === 'number') {
+    return status === 0 || status === 1;
+  }
+  if (typeof status === 'string') {
+    const u = status.trim().toLowerCase();
+    return u === 'active' || u === 'suspended';
+  }
+  return false;
+}
+
 /** ממשקי DTO לפנימיות ולסטטיסטיקה — תואמים ל-API. */
 export interface EducationPlaceStatsDto {
   id: number;
